@@ -15,6 +15,7 @@ func TestHello(t *testing.T) {
 		t.Errorf("Hello() = %q, want %q", got, want)
 	}
 }
+
 func Test_BatchStudentsCreate(t *testing.T) {
 	// this tests CreateStudent and CreateStudents so creation in mass also works.
 	students := GenerateTestData()
@@ -48,7 +49,6 @@ func Test_StudentsCrud(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	// Get
 	studentMittens, err := GetStudent(sid)
 	if err != nil {
@@ -72,6 +72,7 @@ func Test_StudentsCrud(t *testing.T) {
 		GraduationYear: graduationYear2,
 		AvgGPA:         avgGPA2,
 	}
+
 	err = UpdateStudent(opts)
 	if err != nil {
 		log.Fatal(err)

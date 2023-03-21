@@ -17,6 +17,7 @@ type ReportCard struct {
 	English    float64
 	PhysicalED float64
 	Lunch      float64
+	ClassList  []string
 }
 type UpdateReportCardOptions struct {
 	// will not update
@@ -27,6 +28,7 @@ type UpdateReportCardOptions struct {
 	English    float64
 	PhysicalED float64
 	Lunch      float64
+	ClassList  []string
 }
 
 func CreateReportCard(studentID string) (ReportCard, error) {
@@ -44,7 +46,7 @@ func createReportCard(studentID string) (ReportCard, error) {
 		PhysicalED: float64(rand.Intn(400)) / 100.0,
 		Lunch:      float64(rand.Intn(400)) / 100.0,
 	}
-	insertStatement := `INSERT INTO ReportCards("studentid","math","science","english","physicaled","lunch") values ($1,$2,$3,$4,$5,$6)`
+	insertStatement := `INSERT INTO ReportCards("student_id","math","science","english","physical_ed","lunch") values ($1,$2,$3,$4,$5,$6)`
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Fatal(err)
@@ -61,7 +63,7 @@ func GetReportCard(studentID string) (ReportCard, error) {
 	return getReportCard(studentID)
 }
 func getReportCard(studentID string) (ReportCard, error) {
-	getStatement := `SELECT * FROM ReportCards WHERE studentid = $1`
+	getStatement := `SELECT * FROM ReportCards WHERE student_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Fatal(err)
@@ -73,8 +75,11 @@ func getReportCard(studentID string) (ReportCard, error) {
 	}
 	return reportCard, nil
 }
-
 func (opts UpdateReportCardOptions) UpdateReportCard() error {
+	return opts.updateReportCard()
+}
+
+func (opts UpdateReportCardOptions) updateReportCard() error {
 	var (
 		SQL    = `UPDATE ReportCards SET`
 		values []interface{}
@@ -97,20 +102,24 @@ func (opts UpdateReportCardOptions) UpdateReportCard() error {
 		i++
 	}
 	if opts.PhysicalED != 0 {
-		SQL += fmt.Sprintf(" physicaled = $%d,", i)
+		SQL += fmt.Sprintf(" physical_ed = $%d,", i)
 		values = append(values, opts.PhysicalED)
 		i++
 	}
 	if opts.Lunch != 0 {
-		SQL += fmt.Sprintf(" lunch = $%d", i)
+		SQL += fmt.Sprintf(" lunch = $%d,", i)
 		values = append(values, opts.Lunch)
+		i++
+	}
+	if len(opts.ClassList) != 0 {
+		SQL += fmt.Sprintf(" class_list = $%d", i)
+		values = append(values, strings.Join(opts.ClassList, ","))
 		i++
 	}
 	if SQL[len(SQL)-1] == ',' {
 		SQL = SQL[:len(SQL)-1]
 	}
-	SQL += " WHERE studentid = $1"
-	values = append(values, opts.StudentID)
+	SQL += " WHERE student_id = $1"
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Fatal(err)
@@ -127,7 +136,7 @@ func DeleteReportCard(studentID string) error {
 	return deleteReportCard(studentID)
 }
 func deleteReportCard(studentID string) error {
-	SQL := `DELETE FROM ReportCards WHERE studentid = $1`
+	SQL := `DELETE FROM ReportCards WHERE student_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Fatal(err)
@@ -150,8 +159,7 @@ func deleteBatchReportCard(students []Student) error {
 		batchVals = append(batchVals, student.StudentID)
 	}
 	//batch = append(batch, ")")
-	SQL := fmt.Sprintf(`DELETE FROM ReportCards WHERE studentid IN (%s)`, strings.Join(batch, ","))
-	fmt.Println(SQL)
+	SQL := fmt.Sprintf(`DELETE FROM ReportCards WHERE student_id IN (%s)`, strings.Join(batch, ","))
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Fatal(err)
@@ -165,7 +173,10 @@ func deleteBatchReportCard(students []Student) error {
 }
 
 func ScanReportCard(row *sql.Row) (ReportCard, error) {
-	reportCard := ReportCard{}
+	var (
+		reportCard = ReportCard{}
+		classList  sql.NullString
+	)
 	err := row.Scan(
 		&reportCard.StudentID,
 		&reportCard.Math,
@@ -173,9 +184,13 @@ func ScanReportCard(row *sql.Row) (ReportCard, error) {
 		&reportCard.English,
 		&reportCard.PhysicalED,
 		&reportCard.Lunch,
+		&classList,
 	)
 	if err != nil {
 		return reportCard, err
+	}
+	if classList.Valid {
+		reportCard.ClassList = strings.Split(classList.String, ",")
 	}
 	return reportCard, nil
 }

@@ -49,15 +49,16 @@ func createNewStudent(name string, currentYear int, graduationYear int, avgGPA f
 		randomFloat := rand.Float64() * 4.0
 		avgGPA = randomFloat
 	}
-	insertStatement := `INSERT into STUDENTS("studentid","name","currentyear","graduationyear","avggpa","age","dob","enrolled") values ($1,$2,$3,$4,$5,$6,$7,$8)`
-	dobStr := dob.Format("2006-01-02")
+	insertStatement := `INSERT INTO STUDENTS("student_id","name","current_year","graduation_year","avg_gpa","age","dob","enrolled") VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`
+	//dobStr := dob.Format("2006-01-02")
+	//fmt.Println(dobStr)
 	studentID := uuid.New().String()
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	_, err = db.Exec(insertStatement, studentID, name, currentYear, graduationYear, avgGPA, age, dobStr, enrolled)
+	_, err = db.Exec(insertStatement, studentID, name, currentYear, graduationYear, avgGPA, age, dob, enrolled)
 	if err != nil {
 		return "", err
 	}
@@ -80,10 +81,10 @@ func createNewStudents(students []Student) error {
 		batchVals = append(batchVals, student.GraduationYear)
 		batchVals = append(batchVals, student.AvgGPA)
 		batchVals = append(batchVals, student.Age)
-		batchVals = append(batchVals, student.Dob.Format("2006-01-02"))
+		batchVals = append(batchVals, student.Dob)
 		batchVals = append(batchVals, student.Enrolled)
 	}
-	insertStatement := fmt.Sprintf(`INSERT into STUDENTS("studentid","name","currentyear","graduationyear","avggpa","age","dob","enrolled") values %s`, strings.Join(batch, ","))
+	insertStatement := fmt.Sprintf(`INSERT into STUDENTS("student_id","name","current_year","graduation_year","avg_gpa","age","dob","enrolled") values %s`, strings.Join(batch, ","))
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Fatal(err)
@@ -101,7 +102,7 @@ func GetStudent(studentID string) (Student, error) {
 }
 
 func getStudent(studentID string) (Student, error) {
-	getStatement := `SELECT * FROM STUDENTS WHERE studentid = $1`
+	getStatement := `SELECT * FROM STUDENTS WHERE student_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Fatal(err)
@@ -145,17 +146,17 @@ func updateStudent(opts StudentUpdateOptions) error {
 	)
 	values = append(values, opts.StudentID)
 	if opts.CurrentYear != 0 {
-		SQL += fmt.Sprintf(" currentyear = $%d,", i)
+		SQL += fmt.Sprintf(" current_year = $%d,", i)
 		values = append(values, opts.CurrentYear)
 		i++
 	}
 	if opts.GraduationYear != 0 {
-		SQL += fmt.Sprintf(" graduationyear = $%d,", i)
+		SQL += fmt.Sprintf(" graduation_year = $%d,", i)
 		values = append(values, opts.GraduationYear)
 		i++
 	}
 	if opts.AvgGPA != 0 {
-		SQL += fmt.Sprintf(" avggpa = $%d,", i)
+		SQL += fmt.Sprintf(" avg_gpa = $%d,", i)
 		values = append(values, opts.AvgGPA)
 		i++
 	}
@@ -164,7 +165,7 @@ func updateStudent(opts StudentUpdateOptions) error {
 		values = append(values, opts.Age)
 		i++
 	}
-	SQL += fmt.Sprintf(" enrolled = $%d WHERE studentid = $1", i)
+	SQL += fmt.Sprintf(" enrolled = $%d WHERE student_id = $1", i)
 	values = append(values, opts.Enrolled)
 	db, err := sqlgeneric.Init()
 	if err != nil {
@@ -182,7 +183,7 @@ func DeleteStudent(studentID string) error {
 	return deleteStudent(studentID)
 }
 func deleteStudent(studentID string) error {
-	deleteStatement := `DELETE FROM STUDENTS WHERE studentid = $1`
+	deleteStatement := `DELETE FROM STUDENTS WHERE student_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Fatal(err)

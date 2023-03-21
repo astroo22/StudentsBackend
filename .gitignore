@@ -1,3 +1,4 @@
 # Ignore config files
 *.yml
 sqlgenerics.go
+assert.go

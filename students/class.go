@@ -1,0 +1,125 @@
+package students
+
+import (
+	"database/sql"
+	"fmt"
+	"log"
+	"students/sqlgeneric"
+
+	"github.com/google/uuid"
+)
+
+type Class struct {
+	ClassID       string
+	TeachingGrade int
+	ProfessorID   string
+	Subject       string
+	Roster        []string
+	ClassAvg      float64
+}
+type UpdateClassOptions struct {
+	// will not update
+	ClassID string
+	// will update
+	ProfessorID string
+	Roster      []string
+	ClassAvg    float64
+}
+
+func CreateClass(teachingGrade int, professorID string, subject string, roster []string) (Class, error) {
+	class := Class{
+		ClassID:       uuid.New().String(),
+		TeachingGrade: teachingGrade,
+		ProfessorID:   professorID,
+		Subject:       subject,
+		Roster:        roster,
+	}
+	insertStatement := `INSERT INTO Classes("class_id","teaching_grade","professor_id","subject","roster") VALUES ($1,$2,$3,$4,$5)`
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+	_, err = db.Exec(insertStatement, class.ClassID, class.TeachingGrade, class.ProfessorID, class.Subject, class.Roster)
+	if err != nil {
+		return Class{}, err
+	}
+	return class, nil
+}
+func GetClass(classID string) (Class, error) {
+	return getClass(classID)
+}
+
+func getClass(classID string) (Class, error) {
+	getStatement := `SELECT * FROM Classes WHERE class_id = $1`
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+	class, err := ScanClass(db.QueryRow(getStatement, classID))
+	if err != nil {
+		return Class{}, err
+	}
+	return class, nil
+
+}
+func (opts UpdateClassOptions) UpdateClass() error {
+	return opts.updateClass()
+}
+func (opts UpdateClassOptions) updateClass() error {
+	var (
+		SQL    = `UPDATE Classes SET`
+		values []interface{}
+		i      = 2
+	)
+	values = append(values, opts.ClassID)
+	if len(opts.ProfessorID) != 0 {
+		SQL += fmt.Sprintf(" professor_id = $%d,", i)
+		values = append(values, opts.ProfessorID)
+		i++
+	}
+	if len(opts.Roster) != 0 {
+		SQL += fmt.Sprintf(" roster = $%d,", i)
+		values = append(values, opts.Roster)
+		i++
+	}
+	if opts.ClassAvg != 0 {
+		SQL += fmt.Sprintf(" class_avg = $%d,", i)
+		values = append(values, opts.ClassAvg)
+		i++
+	}
+	if SQL[len(SQL)-1] == ',' {
+		SQL = SQL[:len(SQL)-1]
+	}
+	SQL += " WHERE class_id = $1"
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+	_, err = db.Exec(SQL, values...)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func ScanClass(row *sql.Row) (Class, error) {
+	return scanClass(row)
+}
+func scanClass(row *sql.Row) (Class, error) {
+	class := Class{}
+	err := row.Scan(
+		&class.ClassID,
+		&class.TeachingGrade,
+		&class.ProfessorID,
+		&class.Subject,
+		&class.Roster,
+		&class.ClassAvg,
+	)
+	if err != nil {
+		return Class{}, err
+	}
+	return class, nil
+}
