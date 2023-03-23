@@ -3,20 +3,24 @@ package client
 import "time"
 
 type Student struct {
-	StudentID      int       `json:"studentID"`
+	StudentID      string    `json:"student_id"`
 	Name           string    `json:"name"`
-	CurrentYear    int       `json:"currentYear"`
-	GraduationYear int       `json:"graduationYear"`
-	AvgGPA         int       `json:"avgGPA,omitempty"`
+	CurrentYear    int       `json:"current_year"`
+	GraduationYear int       `json:"graduation_year"`
+	AvgGPA         int       `json:"gpa,omitempty"`
 	Age            int       `json:"age"`
 	Dob            time.Time `json:"dob"`
 	Enrolled       bool      `json:"enrolled"`
 }
-type ClassRoster struct {
-	ID             int       `json:"ID"`
-	GraduationYear int       `json:"classGraduationYear"`
-	ClassRoster    []Student `json:"classRoster,omitempty"`
-}
+
+// TODO: Also redo this for grades
+// type ClassRoster struct {
+// 	ID             int       `json:"ID"`
+// 	GraduationYear int       `json:"classGraduationYear"`
+// 	ClassRoster    []Student `json:"classRoster,omitempty"`
+// }
+
+// TODO: fix this
 type StudentGrades struct {
 	StudentID  int `json:"studentID"`
 	Math       int `json:"math"`
@@ -27,9 +31,10 @@ type StudentGrades struct {
 }
 
 type Class struct {
-	ClassID         int       `json:"classID"`
-	ProfessorName   string    `json:"professorName,omitempty"`
-	AvgClassGPA     int       `json:"avgClassGPA,omitempty"`
-	CurrentlyActive bool      `json:"currentlyActive"`
-	StudentRoster   []Student `json:"studentRoster,omitempty"`
+	ClassID       string   `json:"class_id"`
+	TeachingGrade int      `json:"teaching_grade"`
+	ProfessorID   string   `json:"professor_id,omitempty"`
+	Subject       string   `json:"subject"`
+	Roster        []string `json:"roster,omitempty"`
+	ClassAvg      int      `json:"class_avg,omitempty"`
 }

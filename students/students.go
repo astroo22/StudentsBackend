@@ -22,7 +22,7 @@ type Student struct {
 	Dob            time.Time
 	Enrolled       bool
 }
-type StudentUpdateOptions struct {
+type UpdateStudentOptions struct {
 	// will not update
 	StudentID string
 	// will update
@@ -55,7 +55,7 @@ func createNewStudent(name string, currentYear int, graduationYear int, avgGPA f
 	studentID := uuid.New().String()
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	defer db.Close()
 	_, err = db.Exec(insertStatement, studentID, name, currentYear, graduationYear, avgGPA, age, dob, enrolled)
@@ -87,7 +87,7 @@ func createNewStudents(students []Student) error {
 	insertStatement := fmt.Sprintf(`INSERT into STUDENTS("student_id","name","current_year","graduation_year","avg_gpa","age","dob","enrolled") values %s`, strings.Join(batch, ","))
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	defer db.Close()
 	_, err = db.Exec(insertStatement, batchVals...)
@@ -105,7 +105,7 @@ func getStudent(studentID string) (Student, error) {
 	getStatement := `SELECT * FROM STUDENTS WHERE student_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	defer db.Close()
 	ret, err := ScanStudent(db.QueryRow(getStatement, studentID))
@@ -118,7 +118,7 @@ func GetAllStudents() ([]Student, error) {
 	getStatement := `SELECT * FROM STUDENTS`
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	defer db.Close()
 	ret, err := db.Query(getStatement)
@@ -133,12 +133,12 @@ func GetAllStudents() ([]Student, error) {
 }
 
 // for the sake of simplicity this will b a stomp
-func UpdateStudent(opts StudentUpdateOptions) error {
-	return updateStudent(opts)
+func (opts UpdateStudentOptions) UpdateStudent() error {
+	return opts.updateStudent()
 }
 
 // Should modify to check for sql no rows on a get here
-func updateStudent(opts StudentUpdateOptions) error {
+func (opts UpdateStudentOptions) updateStudent() error {
 	var (
 		SQL    = `UPDATE STUDENTS SET`
 		values []interface{}
@@ -169,7 +169,7 @@ func updateStudent(opts StudentUpdateOptions) error {
 	values = append(values, opts.Enrolled)
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	defer db.Close()
 	_, err = db.Exec(SQL, values...)
@@ -186,7 +186,7 @@ func deleteStudent(studentID string) error {
 	deleteStatement := `DELETE FROM STUDENTS WHERE student_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	defer db.Close()
 	_, err = db.Exec(deleteStatement, studentID)

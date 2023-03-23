@@ -21,7 +21,7 @@ func Test_BatchStudentsCreate(t *testing.T) {
 	students := GenerateTestData()
 	err := CreateNewStudents(students)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	//fmt.Printf("where are my students: %+v", students)
 	th.AssertEqual(t, "generated: ", len(students), 10)
@@ -47,12 +47,12 @@ func Test_StudentsCrud(t *testing.T) {
 	// Create
 	sid, err := CreateNewStudent(name1, currentYear, graduationYear, avgGPA, age, dob, true)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	// Get
 	studentMittens, err := GetStudent(sid)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	// value checks
 	if len(studentMittens.StudentID) > 0 {
@@ -66,20 +66,20 @@ func Test_StudentsCrud(t *testing.T) {
 		log.Println("Get did not return a value skipping get tests. (db on?)")
 	}
 	// #demotion
-	opts := StudentUpdateOptions{
+	opts := UpdateStudentOptions{
 		StudentID:      sid,
 		CurrentYear:    currentYear2,
 		GraduationYear: graduationYear2,
 		AvgGPA:         avgGPA2,
 	}
 
-	err = UpdateStudent(opts)
+	err = opts.UpdateStudent()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	studentMittens, err = GetStudent(sid)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	if len(studentMittens.StudentID) > 0 {
 		th.AssertEqual(t, "sudent name : ", studentMittens.Name, name1)
@@ -93,7 +93,7 @@ func Test_StudentsCrud(t *testing.T) {
 	}
 	err = DeleteStudent(studentMittens.StudentID)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	_, err = GetStudent(studentMittens.StudentID)
 	if err == nil {

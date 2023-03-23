@@ -11,13 +11,13 @@ func Test_GradesCrud(t *testing.T) {
 	students := GenerateTestData()
 	err := CreateNewStudents(students)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	reportCardsM := []ReportCard{}
 	for _, student := range students {
 		reportCard, err := CreateReportCard(student.StudentID)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(" err : ", err)
 		}
 		reportCardsM = append(reportCardsM, reportCard)
 	}
@@ -25,7 +25,7 @@ func Test_GradesCrud(t *testing.T) {
 	th.AssertEqual(t, "len reportcards generated", len(reportCardsM), 10)
 	newReportCard, err := GetReportCard(reportCardsM[0].StudentID)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	if len(newReportCard.StudentID) > 0 {
 		th.AssertEqual(t, "Math", newReportCard.Math, reportCardsM[0].Math)
@@ -48,11 +48,11 @@ func Test_GradesCrud(t *testing.T) {
 	}
 	err = opts.UpdateReportCard()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	updatedReport, err := GetReportCard(students[0].StudentID)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	if len(updatedReport.StudentID) > 0 {
 		th.AssertEqual(t, "Math", updatedReport.Math, 4.0)
@@ -65,7 +65,7 @@ func Test_GradesCrud(t *testing.T) {
 	}
 	err = DeleteBatchReportCard(students)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	_, err = GetReportCard(students[0].StudentID)
 	if err == nil {

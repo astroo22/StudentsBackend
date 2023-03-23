@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 	"students/sqlgeneric"
 
 	"github.com/google/uuid"
@@ -35,7 +36,7 @@ func createProfessor(name string) (Professor, error) {
 
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	defer db.Close()
 	_, err = db.Exec(insertStatement, prof.ProfessorID, prof.Name)
@@ -48,7 +49,7 @@ func GetProfessor(professorID string) (Professor, error) {
 	getStatement := `SELECT * FROM Professors WHERE professor_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	defer db.Close()
 	prof, err := ScanProf(db.QueryRow(getStatement, professorID))
@@ -84,7 +85,7 @@ func (opts UpdateProfessorOptions) updateProfessor() error {
 	SQL += " WHERE professor_id = $1"
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	defer db.Close()
 	_, err = db.Exec(SQL, values...)
@@ -98,7 +99,7 @@ func DeleteProfessor(professorID string) error {
 	deleteStatement := `DELETE * FROM Professors WHERE professor_id =$1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	defer db.Close()
 	_, err = db.Exec(deleteStatement, professorID)
@@ -114,15 +115,31 @@ func ScanProf(row *sql.Row) (Professor, error) {
 
 // this is going to error on nulls will fix when I write testing. This will also need to be fixed in class and grades probably
 func scanProf(row *sql.Row) (Professor, error) {
-	prof := Professor{}
+	var (
+		prof      = Professor{}
+		stdAvg    sql.NullFloat64
+		classList sql.NullString
+	)
 	err := row.Scan(
 		&prof.ProfessorID,
 		&prof.Name,
-		&prof.ClassList,
-		&prof.StudentAvg,
+		&stdAvg,
+		&classList,
 	)
 	if err != nil {
 		return Professor{}, err
+	}
+	if stdAvg.Valid {
+		var value interface{}
+		value, err = stdAvg.Value()
+		if err == nil {
+			prof.StudentAvg = value.(float64)
+		} else {
+			fmt.Println(err)
+		}
+	}
+	if classList.Valid {
+		prof.ClassList = strings.Split(classList.String, ",")
 	}
 	return prof, nil
 }

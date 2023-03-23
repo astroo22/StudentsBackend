@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 	"students/sqlgeneric"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type Class struct {
@@ -37,10 +39,10 @@ func CreateClass(teachingGrade int, professorID string, subject string, roster [
 	insertStatement := `INSERT INTO Classes("class_id","teaching_grade","professor_id","subject","roster") VALUES ($1,$2,$3,$4,$5)`
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	defer db.Close()
-	_, err = db.Exec(insertStatement, class.ClassID, class.TeachingGrade, class.ProfessorID, class.Subject, class.Roster)
+	_, err = db.Exec(insertStatement, class.ClassID, class.TeachingGrade, class.ProfessorID, class.Subject, pq.Array(class.Roster))
 	if err != nil {
 		return Class{}, err
 	}
@@ -54,7 +56,7 @@ func getClass(classID string) (Class, error) {
 	getStatement := `SELECT * FROM Classes WHERE class_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	defer db.Close()
 	class, err := ScanClass(db.QueryRow(getStatement, classID))
@@ -81,7 +83,7 @@ func (opts UpdateClassOptions) updateClass() error {
 	}
 	if len(opts.Roster) != 0 {
 		SQL += fmt.Sprintf(" roster = $%d,", i)
-		values = append(values, opts.Roster)
+		values = append(values, pq.Array(opts.Roster))
 		i++
 	}
 	if opts.ClassAvg != 0 {
@@ -95,7 +97,7 @@ func (opts UpdateClassOptions) updateClass() error {
 	SQL += " WHERE class_id = $1"
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	defer db.Close()
 	_, err = db.Exec(SQL, values...)
@@ -110,16 +112,47 @@ func ScanClass(row *sql.Row) (Class, error) {
 }
 func scanClass(row *sql.Row) (Class, error) {
 	class := Class{}
+	var (
+		classAvg sql.NullFloat64
+		roster   []byte
+	)
 	err := row.Scan(
 		&class.ClassID,
 		&class.TeachingGrade,
 		&class.ProfessorID,
 		&class.Subject,
-		&class.Roster,
-		&class.ClassAvg,
+		&roster,
+		&classAvg,
 	)
 	if err != nil {
 		return Class{}, err
 	}
+	if classAvg.Valid {
+		var value interface{}
+		value, err = classAvg.Value()
+		if err == nil {
+			class.ClassAvg = value.(float64)
+		}
+	}
+	// if err := json.Unmarshal(roster, &class.Roster); err != nil {
+	// 	return Class{}, err
+	// }
+	class.Roster = strings.Split(string(roster), ",")
 	return class, nil
+}
+func DeleteClass(classID string) error {
+	return deleteClass(classID)
+}
+func deleteClass(classID string) error {
+	deleteStatement := `DELETE FROM Classes WHERE class_id = $1`
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		log.Println(" err : ", err)
+	}
+	defer db.Close()
+	_, err = db.Exec(deleteStatement, classID)
+	if err != nil {
+		return err
+	}
+	return nil
 }

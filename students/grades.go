@@ -49,7 +49,7 @@ func createReportCard(studentID string) (ReportCard, error) {
 	insertStatement := `INSERT INTO ReportCards("student_id","math","science","english","physical_ed","lunch") values ($1,$2,$3,$4,$5,$6)`
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	defer db.Close()
 	_, err = db.Exec(insertStatement, studentID, reportCard.Math, reportCard.Science, reportCard.English, reportCard.PhysicalED, reportCard.Lunch)
@@ -66,7 +66,7 @@ func getReportCard(studentID string) (ReportCard, error) {
 	getStatement := `SELECT * FROM ReportCards WHERE student_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	defer db.Close()
 	reportCard, err := ScanReportCard(db.QueryRow(getStatement, studentID))
@@ -122,7 +122,7 @@ func (opts UpdateReportCardOptions) updateReportCard() error {
 	SQL += " WHERE student_id = $1"
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println("update reportcards : ", err)
 	}
 	defer db.Close()
 	_, err = db.Exec(SQL, values...)
@@ -139,7 +139,7 @@ func deleteReportCard(studentID string) error {
 	SQL := `DELETE FROM ReportCards WHERE student_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	defer db.Close()
 	_, err = db.Exec(SQL, studentID)
@@ -162,7 +162,7 @@ func deleteBatchReportCard(students []Student) error {
 	SQL := fmt.Sprintf(`DELETE FROM ReportCards WHERE student_id IN (%s)`, strings.Join(batch, ","))
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(" err : ", err)
 	}
 	defer db.Close()
 	_, err = db.Exec(SQL, batchVals...)
