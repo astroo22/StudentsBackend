@@ -18,9 +18,9 @@ func main() {
 
 	// Set up the routes for Students
 	router.HandleFunc("/students", handlers.CreateStudentHandler).Methods("POST")
-	router.HandleFunc("/students/{id}", handlers.GetStudentHandler).Methods("GET")
-	router.HandleFunc("/students/{id}", handlers.UpdateStudentHandler).Methods("PUT")
-	router.HandleFunc("/students/{id}", handlers.DeleteStudentHandler).Methods("DELETE")
+	router.HandleFunc("/students/{student_id}", handlers.GetStudentHandler).Methods("GET")
+	router.HandleFunc("/students/{student_id}", handlers.UpdateStudentHandler).Methods("PUT")
+	router.HandleFunc("/students/{student_id}", handlers.DeleteStudentHandler).Methods("DELETE")
 
 	// Set up the routes for Grades
 	// router.HandleFunc("/grades", handlers.CreateGradeHandler).Methods("POST")

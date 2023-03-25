@@ -58,26 +58,14 @@ func CreateStudentHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "internal server error")
 		return
 	}
-	fmt.Println(student)
-	// TODO: this tomorrow. get handler tests working CreateNewStudent should probably return student object.
-	// Need to incorperate the API file then create all the other handler files
-	// then finally the telemetry package and we can do generation and stuff
-	// ret, err := json.Marshal(Student{
-	// 	StudentID:      student.StudentID,
-	// 	Name:           student.Name,
-	// 	CurrentYear:    student.CurrentYear,
-	// 	GraduationYear: student.GraduationYear,
-	// 	GPA:            student.GPA,
-	// 	Age:            student.Age,
-	// 	DOB:            student.DOB,
-	// 	Enrolled:       student.Enrolled,
-	// })
+	//thing := student.ToApi()
+	ret, err := json.Marshal(student)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling class")
 		return
 	}
-	//w.Write(ret)
+	w.Write(ret)
 }
 func GetStudentHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -119,51 +107,40 @@ func UpdateStudentHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		opts.StudentID = studentID
 	}
-	name := r.FormValue("name")
-	if len(name) > 0 {
-		opts.Name = name
-	}
 	currentYear, err := strconv.Atoi(r.FormValue("current_year"))
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "Invalid request payload")
-		return
+		fmt.Println(w, "Invalid current year")
 	}
 	if currentYear > 0 && currentYear < 13 {
 		opts.CurrentYear = currentYear
 	}
 	graduationYear, err := strconv.Atoi(r.FormValue("graduation_year"))
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "Invalid request payload")
+		fmt.Fprint(w, "Invalid graduation year")
 	}
-	if graduationYear > 0 && graduationYear < 13 {
+	if graduationYear > 0 {
 		opts.GraduationYear = graduationYear
 	}
-	gpa, err := strconv.ParseFloat(r.FormValue("avg_gpa"), 64)
+	gpa, err := strconv.ParseFloat(r.FormValue("gpa"), 64)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "Invalid request payload")
+		fmt.Fprint(w, "Invalid gpa")
 	}
 	if gpa > 0.0 && gpa <= 4.00 {
 		opts.AvgGPA = gpa
 	}
 	age, err := strconv.Atoi(r.FormValue("age"))
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "Invalid request payload")
-		return
+		fmt.Fprint(w, "Invalid age")
 	}
 	if age > 0 && age < 110 {
 		opts.Age = age
 	}
 	enrolled, err := strconv.ParseBool(r.FormValue("enrolled"))
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "Invalid request payload")
-		return
 	}
 	opts.Enrolled = enrolled
+	fmt.Println(opts)
 	err = opts.UpdateStudent()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

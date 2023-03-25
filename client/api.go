@@ -2,12 +2,12 @@ package client
 
 import "time"
 
-type Student struct {
-	StudentID      string    `json:"student_id"`
+type Student_API struct {
+	StudentID      string    `json:"studentid"`
 	Name           string    `json:"name"`
-	CurrentYear    int       `json:"current_year"`
-	GraduationYear int       `json:"graduation_year"`
-	AvgGPA         int       `json:"gpa,omitempty"`
+	CurrentYear    int       `json:"currentyear"`
+	GraduationYear int       `json:"graduationyear"`
+	AvgGPA         float64   `json:"avggpa,omitempty"`
 	Age            int       `json:"age"`
 	Dob            time.Time `json:"dob"`
 	Enrolled       bool      `json:"enrolled"`

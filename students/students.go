@@ -26,7 +26,6 @@ type UpdateStudentOptions struct {
 	// will not update
 	StudentID string
 	// will update
-	Name           string
 	CurrentYear    int
 	GraduationYear int
 	AvgGPA         float64
@@ -38,12 +37,12 @@ func Hello() string {
 	return "Hello, world."
 }
 
-func CreateNewStudent(name string, currentYear int, graduationYear int, avgGPA float64, age int, dob time.Time, enrolled bool) (string, error) {
+func CreateNewStudent(name string, currentYear int, graduationYear int, avgGPA float64, age int, dob time.Time, enrolled bool) (Student, error) {
 	return createNewStudent(name, currentYear, graduationYear, avgGPA, age, dob, enrolled)
 }
 
 // maybe return entire student later?
-func createNewStudent(name string, currentYear int, graduationYear int, avgGPA float64, age int, dob time.Time, enrolled bool) (string, error) {
+func createNewStudent(name string, currentYear int, graduationYear int, avgGPA float64, age int, dob time.Time, enrolled bool) (Student, error) {
 	if avgGPA == 0.0 {
 		rand.Seed(time.Now().UnixNano())
 		randomFloat := rand.Float64() * 4.0
@@ -60,9 +59,18 @@ func createNewStudent(name string, currentYear int, graduationYear int, avgGPA f
 	defer db.Close()
 	_, err = db.Exec(insertStatement, studentID, name, currentYear, graduationYear, avgGPA, age, dob, enrolled)
 	if err != nil {
-		return "", err
+		return Student{}, err
 	}
-	return studentID, nil
+	ret := Student{
+		StudentID:      studentID,
+		Name:           name,
+		CurrentYear:    currentYear,
+		GraduationYear: graduationYear,
+		AvgGPA:         avgGPA,
+		Age:            age,
+		Enrolled:       enrolled,
+	}
+	return ret, nil
 }
 
 // CreateNewStudents uses batch processing to commit all in one db hit to be more performant
@@ -274,3 +282,16 @@ func GenerateTestData() []Student {
 
 	return students
 }
+
+// func (student Student) ToApi() client.Student_API {
+// 	return client.Student_API{
+// 		StudentID:      student.StudentID,
+// 		Name:           student.Name,
+// 		CurrentYear:    student.CurrentYear,
+// 		GraduationYear: student.GraduationYear,
+// 		AvgGPA:         student.AvgGPA,
+// 		Age:            student.Age,
+// 		Dob:            student.Dob,
+// 		Enrolled:       student.Enrolled,
+// 	}
+// }

@@ -45,12 +45,12 @@ func Test_StudentsCrud(t *testing.T) {
 		dob = time.Date(2007, time.February, 8, 4, 5, 5, 5, time.Local)
 	)
 	// Create
-	sid, err := CreateNewStudent(name1, currentYear, graduationYear, avgGPA, age, dob, true)
+	student, err := CreateNewStudent(name1, currentYear, graduationYear, avgGPA, age, dob, true)
 	if err != nil {
 		log.Println(" err : ", err)
 	}
 	// Get
-	studentMittens, err := GetStudent(sid)
+	studentMittens, err := GetStudent(student.StudentID)
 	if err != nil {
 		log.Println(" err : ", err)
 	}
@@ -67,7 +67,7 @@ func Test_StudentsCrud(t *testing.T) {
 	}
 	// #demotion
 	opts := UpdateStudentOptions{
-		StudentID:      sid,
+		StudentID:      student.StudentID,
 		CurrentYear:    currentYear2,
 		GraduationYear: graduationYear2,
 		AvgGPA:         avgGPA2,
@@ -77,7 +77,7 @@ func Test_StudentsCrud(t *testing.T) {
 	if err != nil {
 		log.Println(" err : ", err)
 	}
-	studentMittens, err = GetStudent(sid)
+	studentMittens, err = GetStudent(student.StudentID)
 	if err != nil {
 		log.Println(" err : ", err)
 	}
