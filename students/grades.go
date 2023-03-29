@@ -35,6 +35,7 @@ func CreateReportCard(studentID string) (ReportCard, error) {
 	return createReportCard(studentID)
 }
 
+// TODO: ALSO Create a classlist update function
 // TODO: Create a Batch Create version of this to be used with generate test data
 func createReportCard(studentID string) (ReportCard, error) {
 	rand.Seed(time.Now().UnixNano())

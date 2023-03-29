@@ -13,21 +13,16 @@ type Student_API struct {
 	Enrolled       bool      `json:"enrolled"`
 }
 
-// TODO: Also redo this for grades
-// type ClassRoster struct {
-// 	ID             int       `json:"ID"`
-// 	GraduationYear int       `json:"classGraduationYear"`
-// 	ClassRoster    []Student `json:"classRoster,omitempty"`
-// }
+// need one for professors
 
-// TODO: fix this
-type StudentGrades struct {
-	StudentID  int `json:"studentID"`
-	Math       int `json:"math"`
-	Science    int `json:"science"`
-	English    int `json:"english"`
-	PhysicalED int `json:"physicalED"`
-	Lunch      int `json:"lunch"`
+type ReportCard_API struct {
+	StudentID  string   `json:"studentID"`
+	Math       float64  `json:"math"`
+	Science    float64  `json:"science"`
+	English    float64  `json:"english"`
+	PhysicalED float64  `json:"physicaled"`
+	Lunch      float64  `json:"lunch"`
+	ClassList  []string `json:"classlist,omitempty"`
 }
 
 type Class_API struct {

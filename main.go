@@ -23,16 +23,16 @@ func main() {
 	router.HandleFunc("/students/{student_id}", handlers.DeleteStudentHandler).Methods("DELETE")
 
 	// Set up the routes for Grades
-	// router.HandleFunc("/grades", handlers.CreateGradeHandler).Methods("POST")
-	// router.HandleFunc("/grades/{id}", handlers.GetGradeHandler).Methods("GET")
-	// router.HandleFunc("/grades/{id}", handlers.UpdateGradeHandler).Methods("PUT")
-	// router.HandleFunc("/grades/{id}", handlers.DeleteGradeHandler).Methods("DELETE")
+	router.HandleFunc("/reportcard", handlers.CreateReportCardHandler).Methods("POST")
+	router.HandleFunc("/reportcard/{student_id}", handlers.GetReportCardHandler).Methods("GET")
+	router.HandleFunc("/reportcard/{student_id}", handlers.UpdateReportCardHandler).Methods("PUT")
+	router.HandleFunc("/reportcard/{student_id}", handlers.DeleteReportCardHandler).Methods("DELETE")
 
 	// Set up the routes for Classes
 	router.HandleFunc("/classes", handlers.CreateClassHandler).Methods("POST")
-	router.HandleFunc("/classes/{id}", handlers.GetClassHandler).Methods("GET")
-	router.HandleFunc("/classes/{id}", handlers.UpdateClassHandler).Methods("PUT")
-	router.HandleFunc("/classes/{id}", handlers.DeleteClassHandler).Methods("DELETE")
+	router.HandleFunc("/classes/{class_id}", handlers.GetClassHandler).Methods("GET")
+	router.HandleFunc("/classes/{class_id}", handlers.UpdateClassHandler).Methods("PUT")
+	router.HandleFunc("/classes/{class_id}", handlers.DeleteClassHandler).Methods("DELETE")
 
 	// Set up the routes for Professors
 	// router.HandleFunc("/professors", handlers.CreateProfessorHandler).Methods("POST")

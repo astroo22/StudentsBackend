@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// TODO: Clean up this file
 func CreateStudentHandler(w http.ResponseWriter, r *http.Request) {
 	name := r.FormValue("name")
 	currentYear, err := strconv.Atoi(r.FormValue("current_year"))

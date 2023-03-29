@@ -54,10 +54,16 @@ func Test_CrudClassHandlers(t *testing.T) {
 
 	r.ServeHTTP(rr, reqPOST)
 
+	// Check the response status code
+	if rr.Code != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			rr.Code, http.StatusOK)
+	}
+
 	classApi := client.Class_API{}
 	err = json.Unmarshal(rr.Body.Bytes(), &classApi)
 	if err != nil {
-		t.Fatalf("error unmarshalling response body: %s", err)
+		t.Errorf("error unmarshalling response body: %s", err)
 	} else {
 		fmt.Println(classApi)
 		th.AssertEqual(t, "classID", len(classApi.ClassID), 36)
@@ -68,12 +74,6 @@ func Test_CrudClassHandlers(t *testing.T) {
 			th.AssertEqual(t, "roster[0]", classApi.Roster[0], "123456789012345678901234567890")
 			th.AssertEqual(t, "roster[1]", classApi.Roster[1], "234567890123456789012345678901")
 		}
-	}
-
-	// Check the response status code
-	if rr.Code != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			rr.Code, http.StatusOK)
 	}
 
 	// create a new GET request
@@ -95,7 +95,7 @@ func Test_CrudClassHandlers(t *testing.T) {
 	classGet := client.Class_API{}
 	err = json.Unmarshal(rr.Body.Bytes(), &classGet)
 	if err != nil {
-		t.Fatalf("error unmarshalling response body: %s", err)
+		t.Errorf("error unmarshalling response body: %s", err)
 	} else {
 		fmt.Println(classGet)
 		th.AssertEqual(t, "teaching grade", classGet.TeachingGrade, classApi.TeachingGrade)
@@ -129,8 +129,7 @@ func Test_CrudClassHandlers(t *testing.T) {
 	r.ServeHTTP(rr, reqUPDATE)
 	// Check the response status code
 	if rr.Code != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			rr.Code, http.StatusOK)
+		t.Errorf("handler returned wrong status code: got %v want %v", rr.Code, http.StatusOK)
 	}
 
 	classUpdate, err := students.GetClass(classApi.ClassID)
@@ -166,14 +165,13 @@ func Test_CrudClassHandlers(t *testing.T) {
 }
 
 func TestCreateClassHandler(t *testing.T) {
-	// create a request body other method// Create a request body
+	// Create a request body
 	form := url.Values{}
 	form.Add("teaching_grade", "9")
 	form.Add("professor_id", "123456789012345678901234567890")
 	form.Add("subject", "math")
 	roster := []string{"123456789012345678901234567890", "234567890123456789012345678901"}
 	form.Add("roster", strings.Join(roster, ","))
-	//form.Add("roster", ["123456789012345678901234567890", "234567890123456789012345678901"])
 	reqBody := strings.NewReader(form.Encode())
 
 	// Create a request with the body and content-type header
