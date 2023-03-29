@@ -30,10 +30,10 @@ type StudentGrades struct {
 	Lunch      int `json:"lunch"`
 }
 
-type Class struct {
-	ClassID       string   `json:"class_id"`
-	TeachingGrade int      `json:"teaching_grade"`
-	ProfessorID   string   `json:"professor_id,omitempty"`
+type Class_API struct {
+	ClassID       string   `json:"classid"`
+	TeachingGrade int      `json:"teachinggrade"`
+	ProfessorID   string   `json:"professorid,omitempty"`
 	Subject       string   `json:"subject"`
 	Roster        []string `json:"roster,omitempty"`
 	ClassAvg      int      `json:"class_avg,omitempty"`

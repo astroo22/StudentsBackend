@@ -17,6 +17,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// TODO: defer deletes on all the created information
+
 func TestCreateStudentHandler(t *testing.T) {
 	// Create a request body
 	form := url.Values{}
@@ -117,14 +119,14 @@ func TestGetStudentHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error unmarshalling response body: %s", err)
 	}
-	fmt.Println(respBody)
+	//fmt.Println(respBody)
 
 	studentapi := client.Student_API{}
 	err = json.Unmarshal(rr.Body.Bytes(), &studentapi)
 	if err != nil {
 		t.Fatalf("error unmarshalling response body: %s", err)
 	}
-	fmt.Println(studentapi)
+	//fmt.Println(studentapi)
 	th.AssertEqual(t, "student name", studentapi.Name, student.Name)
 	th.AssertEqual(t, "current year", studentapi.CurrentYear, student.CurrentYear)
 	th.AssertEqual(t, "graduation year", studentapi.GraduationYear, student.GraduationYear)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"students/students"
 
 	"github.com/gorilla/mux"
@@ -19,9 +20,9 @@ func CreateClassHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	profID := r.FormValue("professor_id")
 	subject := r.FormValue("subject")
-	roster := r.PostForm["roster"]
-
-	class, err := students.CreateClass(classGrade, profID, subject, roster)
+	roster := r.PostFormValue("roster")
+	rosterList := strings.Split(roster, ",")
+	class, err := students.CreateClass(classGrade, profID, subject, rosterList)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error creating class")
@@ -58,9 +59,13 @@ func GetClassHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Class not found")
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(class)
+	ret, err := json.Marshal(class)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "Unexpected error mashalling class")
+		return
+	}
+	w.Write(ret)
 }
 
 func UpdateClassHandler(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +75,7 @@ func UpdateClassHandler(w http.ResponseWriter, r *http.Request) {
 	classID := vars["class_id"]
 	//classID := r.FormValue("class_id")
 	if len(classID) <= 30 {
+		//http.StatusBadRequest
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "Class not found")
 		return
@@ -84,24 +90,25 @@ func UpdateClassHandler(w http.ResponseWriter, r *http.Request) {
 		opts.ClassID = classID
 	}
 	// prof id
-	profID := r.FormValue("prof_id")
-	if len(profID) <= 30 {
+	profID := r.FormValue("professor_id")
+	if len(profID) < 30 {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "Class not found")
-		return
+		fmt.Fprint(w, "professor id")
 	} else {
 		opts.ProfessorID = profID
 	}
 
 	classAvg, err := strconv.ParseFloat(r.FormValue("class_avg"), 64)
 	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "invalid value")
 	} else if classAvg > 0.0 && classAvg <= 4.00 {
 		opts.ClassAvg = classAvg
 	}
 	// TODO: come up with a good value check for roster is uuid of student_id
-	opts.Roster = r.PostForm["roster"]
-
+	roster := r.PostFormValue("roster")
+	rosterList := strings.Split(roster, ",")
+	opts.Roster = rosterList
 	err = opts.UpdateClass()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -121,6 +128,5 @@ func DeleteClassHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Unexpected error deleting class")
 		return
 	}
-
 	w.WriteHeader(http.StatusOK)
 }

@@ -98,6 +98,7 @@ func (opts UpdateClassOptions) updateClass() error {
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Println(" err : ", err)
+		return err
 	}
 	defer db.Close()
 	_, err = db.Exec(SQL, values...)
@@ -107,6 +108,16 @@ func (opts UpdateClassOptions) updateClass() error {
 	return nil
 }
 
+func removeBrackets(roster []string) []string {
+	var (
+		ret []string
+	)
+	for _, v := range roster {
+		removed := strings.ReplaceAll(strings.ReplaceAll(v, "{", ""), "}", "")
+		ret = append(ret, removed)
+	}
+	return ret
+}
 func ScanClass(row *sql.Row) (Class, error) {
 	return scanClass(row)
 }
@@ -134,10 +145,9 @@ func scanClass(row *sql.Row) (Class, error) {
 			class.ClassAvg = value.(float64)
 		}
 	}
-	// if err := json.Unmarshal(roster, &class.Roster); err != nil {
-	// 	return Class{}, err
-	// }
-	class.Roster = strings.Split(string(roster), ",")
+	// TODO: strange error here not entirely sure why {} show up. review this later to solve
+	temp := removeBrackets(strings.Split(string(roster), ","))
+	class.Roster = temp
 	return class, nil
 }
 func DeleteClass(classID string) error {
