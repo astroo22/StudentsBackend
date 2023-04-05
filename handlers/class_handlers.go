@@ -40,7 +40,6 @@ func CreateClassHandler(w http.ResponseWriter, r *http.Request) {
 func GetClassHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	classID := vars["class_id"]
-	//classID := r.FormValue("class_id")
 	if len(classID) <= 30 {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "Class not found")

@@ -69,10 +69,12 @@ func (opts UpdateProfessorOptions) updateProfessor() error {
 		i      = 2
 	)
 	values = append(values, opts.ProfessorID)
+
 	if opts.StudentAvg != 0 {
 		SQL += fmt.Sprintf(" student_avg = $%d,", i)
 		values = append(values, opts.StudentAvg)
 		i++
+		fmt.Println(opts.StudentAvg)
 	}
 	if len(opts.ClassList) != 0 {
 		SQL += fmt.Sprintf(" class_list = $%d", i)
@@ -87,6 +89,7 @@ func (opts UpdateProfessorOptions) updateProfessor() error {
 	if err != nil {
 		log.Println(" err : ", err)
 	}
+	fmt.Println(SQL)
 	defer db.Close()
 	_, err = db.Exec(SQL, values...)
 	if err != nil {
@@ -94,9 +97,12 @@ func (opts UpdateProfessorOptions) updateProfessor() error {
 	}
 	return nil
 }
-
 func DeleteProfessor(professorID string) error {
-	deleteStatement := `DELETE * FROM Professors WHERE professor_id =$1`
+	return deleteProfessor(professorID)
+}
+
+func deleteProfessor(professorID string) error {
+	deleteStatement := `DELETE FROM Professors WHERE professor_id =$1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Println(" err : ", err)

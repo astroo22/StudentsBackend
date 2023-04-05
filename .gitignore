@@ -2,3 +2,4 @@
 *.yml
 sqlgenerics.go
 assert.go
+todo.txt

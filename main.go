@@ -36,9 +36,9 @@ func main() {
 
 	// Set up the routes for Professors
 	// router.HandleFunc("/professors", handlers.CreateProfessorHandler).Methods("POST")
-	// router.HandleFunc("/professors/{id}", handlers.GetProfessorHandler).Methods("GET")
-	// router.HandleFunc("/professors/{id}", handlers.UpdateProfessorHandler).Methods("PUT")
-	// router.HandleFunc("/professors/{id}", handlers.DeleteProfessorHandler).Methods("DELETE")
+	// router.HandleFunc("/professors/{prof_id}", handlers.GetProfessorHandler).Methods("GET")
+	// router.HandleFunc("/professors/{prof_id}", handlers.UpdateProfessorHandler).Methods("PUT")
+	// router.HandleFunc("/professors/{prof_id}", handlers.DeleteProfessorHandler).Methods("DELETE")
 
 	// Start the HTTP server
 	log.Printf("Starting server on port 8080")

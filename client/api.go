@@ -14,6 +14,12 @@ type Student_API struct {
 }
 
 // need one for professors
+type Professor_API struct {
+	ProfessorID string   `json:"professorid"`
+	Name        string   `json:"name"`
+	StudentAvg  float64  `json:"studentavg"`
+	ClassList   []string `json:"classlist,omitempty"`
+}
 
 type ReportCard_API struct {
 	StudentID  string   `json:"studentID"`

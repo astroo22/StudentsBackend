@@ -5,7 +5,6 @@ import (
 	"testing"
 )
 
-// TODO: everything lol
 func Test_ProfessorCrud(t *testing.T) {
 	var (
 		newAvg = 3.5

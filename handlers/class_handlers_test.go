@@ -82,7 +82,9 @@ func Test_CrudClassHandlers(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	rr.Body.Reset()
+
 	// serve the request and record the response
 	r.ServeHTTP(rr, reqGET)
 
