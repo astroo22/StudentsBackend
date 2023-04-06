@@ -2,6 +2,8 @@ package client
 
 import "time"
 
+// need to create a section of errors and distinguish errors throughout
+
 type Student_API struct {
 	StudentID      string    `json:"studentid"`
 	Name           string    `json:"name"`

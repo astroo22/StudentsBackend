@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"students/students"
 
 	"github.com/gorilla/mux"
@@ -114,6 +115,15 @@ func UpdateReportCardHandler(w http.ResponseWriter, r *http.Request) {
 	} else if lunch >= 0.00 && lunch <= 4.00 {
 		opts.Lunch = lunch
 	}
+
+	// add class
+	addClass := r.PostFormValue("add_class_list")
+	addClassList := strings.Split(addClass, ",")
+	opts.AddClassList = addClassList
+	// remove class
+	removeClass := r.PostFormValue("remove_class_list")
+	removeClassList := strings.Split(removeClass, ",")
+	opts.RemoveClassList = removeClassList
 
 	err = opts.UpdateReportCard()
 	if err != nil {

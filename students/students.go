@@ -282,16 +282,16 @@ func GenerateTestData() []Student {
 
 	return students
 }
+func removeBrackets(roster []string) []string {
+	var (
+		ret []string
+	)
+	for _, v := range roster {
+		removed := strings.ReplaceAll(strings.ReplaceAll(v, "{", ""), "}", "")
+		if removed != "" {
+			ret = append(ret, removed)
+		}
+	}
 
-// func (student Student) ToApi() client.Student_API {
-// 	return client.Student_API{
-// 		StudentID:      student.StudentID,
-// 		Name:           student.Name,
-// 		CurrentYear:    student.CurrentYear,
-// 		GraduationYear: student.GraduationYear,
-// 		AvgGPA:         student.AvgGPA,
-// 		Age:            student.Age,
-// 		Dob:            student.Dob,
-// 		Enrolled:       student.Enrolled,
-// 	}
-// }
+	return ret
+}

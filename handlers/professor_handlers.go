@@ -83,12 +83,20 @@ func UpdateProfessorHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "invalid value")
 	}
-	classes := r.PostFormValue("class_list")
-	if classes != "" {
-		classList := strings.Split(classes, ",")
-		if len(classList) > 0 {
-			fmt.Println(classList)
-			opts.ClassList = classList
+	addClasses := r.PostFormValue("add_class_list")
+	if addClasses != "" {
+		addClassList := strings.Split(addClasses, ",")
+		if len(addClassList) > 0 {
+			fmt.Println(addClassList)
+			opts.AddClassList = addClassList
+		}
+	}
+	removeClasses := r.PostFormValue("remove_class_list")
+	if removeClasses != "" {
+		removeClassList := strings.Split(removeClasses, ",")
+		if len(removeClassList) > 0 {
+			fmt.Println(removeClassList)
+			opts.RemoveClassList = removeClassList
 		}
 	}
 	fmt.Println(opts)

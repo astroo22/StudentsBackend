@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"golang.org/x/exp/slices"
 )
 
 type Class struct {
@@ -23,9 +24,10 @@ type UpdateClassOptions struct {
 	// will not update
 	ClassID string
 	// will update
-	ProfessorID string
-	Roster      []string
-	ClassAvg    float64
+	ProfessorID  string
+	RemoveRoster []string
+	AddRoster    []string
+	ClassAvg     float64
 }
 
 func CreateClass(teachingGrade int, professorID string, subject string, roster []string) (Class, error) {
@@ -81,9 +83,13 @@ func (opts UpdateClassOptions) updateClass() error {
 		values = append(values, opts.ProfessorID)
 		i++
 	}
-	if len(opts.Roster) != 0 {
+	if len(opts.RemoveRoster) > 0 || len(opts.AddRoster) > 0 {
+		roster, err := opts.prepRosterUpdate()
+		if err != nil {
+			return err
+		}
 		SQL += fmt.Sprintf(" roster = $%d,", i)
-		values = append(values, pq.Array(opts.Roster))
+		values = append(values, pq.Array(roster))
 		i++
 	}
 	if opts.ClassAvg != 0 {
@@ -108,15 +114,19 @@ func (opts UpdateClassOptions) updateClass() error {
 	return nil
 }
 
-func removeBrackets(roster []string) []string {
-	var (
-		ret []string
-	)
-	for _, v := range roster {
-		removed := strings.ReplaceAll(strings.ReplaceAll(v, "{", ""), "}", "")
-		ret = append(ret, removed)
+func (opts UpdateClassOptions) prepRosterUpdate() ([]string, error) {
+	var ret []string
+	class, err := GetClass(opts.ClassID)
+	if err != nil {
+		return nil, err
 	}
-	return ret
+	for _, v := range class.Roster {
+		if !slices.Contains(opts.RemoveRoster, v) {
+			ret = append(ret, v)
+		}
+	}
+	ret = append(ret, opts.AddRoster...)
+	return ret, nil
 }
 func ScanClass(row *sql.Row) (Class, error) {
 	return scanClass(row)
@@ -147,7 +157,9 @@ func scanClass(row *sql.Row) (Class, error) {
 	}
 	// TODO: strange error here not entirely sure why {} show up. review this later to solve
 	temp := removeBrackets(strings.Split(string(roster), ","))
-	class.Roster = temp
+	if len(temp) >= 0 {
+		class.Roster = temp
+	}
 	return class, nil
 }
 func DeleteClass(classID string) error {

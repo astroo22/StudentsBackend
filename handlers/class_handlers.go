@@ -72,7 +72,6 @@ func UpdateClassHandler(w http.ResponseWriter, r *http.Request) {
 	// class id
 	vars := mux.Vars(r)
 	classID := vars["class_id"]
-	//classID := r.FormValue("class_id")
 	if len(classID) <= 30 {
 		//http.StatusBadRequest
 		w.WriteHeader(http.StatusBadRequest)
@@ -104,17 +103,27 @@ func UpdateClassHandler(w http.ResponseWriter, r *http.Request) {
 	} else if classAvg > 0.0 && classAvg <= 4.00 {
 		opts.ClassAvg = classAvg
 	}
-	// TODO: come up with a good value check for roster is uuid of student_id
-	roster := r.PostFormValue("roster")
-	rosterList := strings.Split(roster, ",")
-	opts.Roster = rosterList
+
+	// roster add
+	addRoster := r.PostFormValue("add_roster")
+	if addRoster != "" {
+		addRosterList := strings.Split(addRoster, ",")
+		fmt.Println(len(addRosterList))
+		opts.AddRoster = addRosterList
+	}
+
+	// roster remove
+	removeRoster := r.PostFormValue("remove_roster")
+	if removeRoster != "" {
+		removeRosterList := strings.Split(removeRoster, ",")
+		opts.RemoveRoster = removeRosterList
+	}
 	err = opts.UpdateClass()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Internal Server error")
 		return
 	}
-
 	w.WriteHeader(http.StatusOK)
 }
 

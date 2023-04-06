@@ -8,6 +8,8 @@ import (
 	"students/sqlgeneric"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
+	"golang.org/x/exp/slices"
 )
 
 type Professor struct {
@@ -20,8 +22,9 @@ type UpdateProfessorOptions struct {
 	// will not update
 	ProfessorID string
 	// will update
-	StudentAvg float64
-	ClassList  []string
+	StudentAvg      float64
+	AddClassList    []string
+	RemoveClassList []string
 }
 
 func CreateProfessor(name string) (Professor, error) {
@@ -76,9 +79,13 @@ func (opts UpdateProfessorOptions) updateProfessor() error {
 		i++
 		fmt.Println(opts.StudentAvg)
 	}
-	if len(opts.ClassList) != 0 {
+	if len(opts.AddClassList) != 0 || len(opts.RemoveClassList) != 0 {
+		classList, err := opts.prepProfessorClassUpdate()
+		if err != nil {
+			return err
+		}
 		SQL += fmt.Sprintf(" class_list = $%d", i)
-		values = append(values, opts.ClassList)
+		values = append(values, pq.Array(classList))
 		i++
 	}
 	if SQL[len(SQL)-1] == ',' {
@@ -97,6 +104,21 @@ func (opts UpdateProfessorOptions) updateProfessor() error {
 	}
 	return nil
 }
+func (opts UpdateProfessorOptions) prepProfessorClassUpdate() ([]string, error) {
+	var ret []string
+	prof, err := GetProfessor(opts.ProfessorID)
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range prof.ClassList {
+		if !slices.Contains(opts.RemoveClassList, v) {
+			ret = append(ret, v)
+		}
+	}
+	ret = append(ret, opts.AddClassList...)
+	return ret, nil
+}
+
 func DeleteProfessor(professorID string) error {
 	return deleteProfessor(professorID)
 }

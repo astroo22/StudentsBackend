@@ -8,6 +8,9 @@ import (
 	"strings"
 	"students/sqlgeneric"
 	"time"
+
+	"github.com/lib/pq"
+	"golang.org/x/exp/slices"
 )
 
 type ReportCard struct {
@@ -23,12 +26,13 @@ type UpdateReportCardOptions struct {
 	// will not update
 	StudentID string
 	// will update
-	Math       float64
-	Science    float64
-	English    float64
-	PhysicalED float64
-	Lunch      float64
-	ClassList  []string
+	Math            float64
+	Science         float64
+	English         float64
+	PhysicalED      float64
+	Lunch           float64
+	AddClassList    []string
+	RemoveClassList []string
 }
 
 func CreateReportCard(studentID string) (ReportCard, error) {
@@ -53,7 +57,7 @@ func createReportCard(studentID string) (ReportCard, error) {
 		log.Println(" err : ", err)
 	}
 	defer db.Close()
-	_, err = db.Exec(insertStatement, studentID, reportCard.Math, reportCard.Science, reportCard.English, reportCard.PhysicalED, reportCard.Lunch)
+	_, err = db.Exec(insertStatement, studentID, reportCard.Math, reportCard.Science, reportCard.English, reportCard.PhysicalED, reportCard.Lunch) // pq.Array(reportCard.ClassList))
 	if err != nil {
 		return ReportCard{}, err
 	}
@@ -112,9 +116,13 @@ func (opts UpdateReportCardOptions) updateReportCard() error {
 		values = append(values, opts.Lunch)
 		i++
 	}
-	if len(opts.ClassList) != 0 {
+	if len(opts.RemoveClassList) > 0 || len(opts.AddClassList) > 0 {
+		classList, err := opts.prepClassListUpdate()
+		if err != nil {
+			return err
+		}
 		SQL += fmt.Sprintf(" class_list = $%d", i)
-		values = append(values, strings.Join(opts.ClassList, ","))
+		values = append(values, pq.Array(classList))
 		i++
 	}
 	if SQL[len(SQL)-1] == ',' {
@@ -131,6 +139,23 @@ func (opts UpdateReportCardOptions) updateReportCard() error {
 		return err
 	}
 	return nil
+}
+func (opts UpdateReportCardOptions) prepClassListUpdate() ([]string, error) {
+	reportCard, err := getReportCard(opts.StudentID)
+	if err != nil {
+		return nil, err
+	}
+	var classList []string
+	for _, v := range reportCard.ClassList {
+		if !slices.Contains(opts.RemoveClassList, v) {
+			classList = append(classList, v)
+		}
+	}
+	classList = append(classList, opts.AddClassList...)
+	if len(classList) > 7 {
+		return nil, fmt.Errorf("too many classes %v", classList)
+	}
+	return classList, err
 }
 
 func DeleteReportCard(studentID string) error {
@@ -176,7 +201,7 @@ func deleteBatchReportCard(students []Student) error {
 func ScanReportCard(row *sql.Row) (ReportCard, error) {
 	var (
 		reportCard = ReportCard{}
-		classList  sql.NullString
+		classList  []byte
 	)
 	err := row.Scan(
 		&reportCard.StudentID,
@@ -190,8 +215,9 @@ func ScanReportCard(row *sql.Row) (ReportCard, error) {
 	if err != nil {
 		return reportCard, err
 	}
-	if classList.Valid {
-		reportCard.ClassList = strings.Split(classList.String, ",")
+	temp := removeBrackets(strings.Split(string(classList), ","))
+	if len(temp) > 0 {
+		reportCard.ClassList = temp
 	}
 	return reportCard, nil
 }
