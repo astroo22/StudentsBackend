@@ -73,38 +73,6 @@ func createNewStudent(name string, currentYear int, graduationYear int, avgGPA f
 	return ret, nil
 }
 
-// CreateNewStudents uses batch processing to commit all in one db hit to be more performant
-func CreateNewStudents(students []Student) error {
-	return createNewStudents(students)
-}
-
-func createNewStudents(students []Student) error {
-	batch := make([]string, 0, len(students))
-	batchVals := make([]interface{}, 0, len(students)*8)
-	for n, student := range students {
-		batch = append(batch, fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)", n*8+1, n*8+2, n*8+3, n*8+4, n*8+5, n*8+6, n*8+7, n*8+8))
-		batchVals = append(batchVals, student.StudentID)
-		batchVals = append(batchVals, student.Name)
-		batchVals = append(batchVals, student.CurrentYear)
-		batchVals = append(batchVals, student.GraduationYear)
-		batchVals = append(batchVals, student.AvgGPA)
-		batchVals = append(batchVals, student.Age)
-		batchVals = append(batchVals, student.Dob)
-		batchVals = append(batchVals, student.Enrolled)
-	}
-	insertStatement := fmt.Sprintf(`INSERT into STUDENTS("student_id","name","current_year","graduation_year","avg_gpa","age","dob","enrolled") values %s`, strings.Join(batch, ","))
-	db, err := sqlgeneric.Init()
-	if err != nil {
-		log.Println(" err : ", err)
-	}
-	defer db.Close()
-	_, err = db.Exec(insertStatement, batchVals...)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func GetStudent(studentID string) (Student, error) {
 	return getStudent(studentID)
 }
@@ -248,40 +216,6 @@ func ScanStudents(rows *sql.Rows) ([]Student, error) {
 	return students, nil
 }
 
-func GenerateTestData() []Student {
-	rand.Seed(time.Now().UnixNano())
-	students := make([]Student, 10)
-
-	for i := 0; i < 10; i++ {
-		name := "Student " + fmt.Sprint(i)
-		currentYear := rand.Intn(12)
-		graduationYear := time.Now().Year() + (12 - currentYear)
-
-		avgGPA := float64(rand.Intn(400)) / 100.0
-
-		age := rand.Intn(10) + 15
-
-		// Generate a random date of birth
-		dob := time.Date(rand.Intn(10)+1990, time.Month(rand.Intn(12)+1), rand.Intn(28)+1, 0, 0, 0, 0, time.UTC)
-		enrolled := rand.Intn(2) == 1
-
-		student := Student{
-			StudentID:      uuid.New().String(),
-			Name:           name,
-			CurrentYear:    currentYear,
-			GraduationYear: graduationYear,
-			AvgGPA:         avgGPA,
-			Age:            age,
-			Dob:            dob,
-			Enrolled:       enrolled,
-		}
-
-		// Add the new student record to the array
-		students[i] = student
-	}
-
-	return students
-}
 func removeBrackets(roster []string) []string {
 	var (
 		ret []string

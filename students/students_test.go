@@ -1,7 +1,6 @@
 package students
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -13,21 +12,6 @@ func TestHello(t *testing.T) {
 	want := "Hello, world."
 	if got := Hello(); got != want {
 		t.Errorf("Hello() = %q, want %q", got, want)
-	}
-}
-
-func Test_BatchStudentsCreate(t *testing.T) {
-	// this tests CreateStudent and CreateStudents so creation in mass also works.
-	students := GenerateTestData()
-	err := CreateNewStudents(students)
-	if err != nil {
-		log.Println(" err : ", err)
-	}
-	//fmt.Printf("where are my students: %+v", students)
-	th.AssertEqual(t, "generated: ", len(students), 10)
-	for _, student := range students {
-		fmt.Printf("StudentID: %s, Age: %d,Current Year:%d, Graduation Year: %d", student.StudentID, student.Age, student.CurrentYear, student.GraduationYear)
-		fmt.Println()
 	}
 }
 

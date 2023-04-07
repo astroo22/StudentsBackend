@@ -59,18 +59,16 @@ func Test_CrudClassHandlers(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v",
 			rr.Code, http.StatusOK)
 	}
-	//students.GetClass()
+
 	classApi := client.Class_API{}
 	err = json.Unmarshal(rr.Body.Bytes(), &classApi)
 	if err != nil {
 		t.Errorf("error unmarshalling response body: %s", err)
 	} else {
-		fmt.Println(classApi)
 		th.AssertEqual(t, "classID", len(classApi.ClassID), 36)
 		th.AssertEqual(t, "teaching grade", classApi.TeachingGrade, 5)
 		th.AssertEqual(t, "profID", classApi.ProfessorID, "123456789012345678901234567890")
 		th.AssertEqual(t, "subject", classApi.Subject, "math")
-		//fmt.Println(classApi.Roster[1])
 		if th.AssertEqual(t, "roster len", len(classApi.Roster), 2) {
 			th.AssertEqual(t, "roster[0]", classApi.Roster[0], "123456789012345678901234567890")
 			th.AssertEqual(t, "roster[1]", classApi.Roster[1], "234567890123456789012345678901")
@@ -100,15 +98,12 @@ func Test_CrudClassHandlers(t *testing.T) {
 	if err != nil {
 		t.Errorf("error unmarshalling response body: %s", err)
 	} else {
-		fmt.Println(classGet)
 		th.AssertEqual(t, "teaching grade", classGet.TeachingGrade, classApi.TeachingGrade)
 		th.AssertEqual(t, "profID", classGet.ProfessorID, classApi.ProfessorID)
 		th.AssertEqual(t, "subject", classGet.Subject, classApi.Subject)
 		if th.AssertEqual(t, "roster len", len(classGet.Roster), 2) {
 			th.AssertEqual(t, "roster[0]", classGet.Roster[0], classApi.Roster[0])
 			th.AssertEqual(t, "roster[1]", classGet.Roster[1], classApi.Roster[1])
-		} else {
-			fmt.Println(classApi.Roster)
 		}
 	}
 
@@ -146,8 +141,6 @@ func Test_CrudClassHandlers(t *testing.T) {
 		if th.AssertEqual(t, "roster len", len(classUpdate.Roster), 4) {
 			th.AssertEqual(t, "roster[0]", classUpdate.Roster[2], "123456789012345678901234567892")
 			th.AssertEqual(t, "roster[1]", classUpdate.Roster[3], "234567890123456789012345678903")
-		} else {
-			fmt.Println(classApi.Roster)
 		}
 	}
 

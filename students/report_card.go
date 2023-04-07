@@ -39,8 +39,6 @@ func CreateReportCard(studentID string) (ReportCard, error) {
 	return createReportCard(studentID)
 }
 
-// TODO: ALSO Create a classlist update function
-// TODO: Create a Batch Create version of this to be used with generate test data
 func createReportCard(studentID string) (ReportCard, error) {
 	rand.Seed(time.Now().UnixNano())
 	reportCard := ReportCard{
@@ -169,29 +167,6 @@ func deleteReportCard(studentID string) error {
 	}
 	defer db.Close()
 	_, err = db.Exec(SQL, studentID)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-func DeleteBatchReportCard(students []Student) error {
-	return deleteBatchReportCard(students)
-}
-func deleteBatchReportCard(students []Student) error {
-	batch := make([]string, 0, len(students))
-	batchVals := make([]interface{}, 0, len(students))
-	for n, student := range students {
-		batch = append(batch, fmt.Sprintf("$%d", n+1))
-		batchVals = append(batchVals, student.StudentID)
-	}
-	//batch = append(batch, ")")
-	SQL := fmt.Sprintf(`DELETE FROM ReportCards WHERE student_id IN (%s)`, strings.Join(batch, ","))
-	db, err := sqlgeneric.Init()
-	if err != nil {
-		log.Println(" err : ", err)
-	}
-	defer db.Close()
-	_, err = db.Exec(SQL, batchVals...)
 	if err != nil {
 		return err
 	}

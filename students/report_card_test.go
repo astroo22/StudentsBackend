@@ -2,38 +2,43 @@ package students
 
 import (
 	"fmt"
-	"log"
+	"time"
+
 	th "students/testhelpers"
 	"testing"
 )
 
 func Test_ReportCardCrud(t *testing.T) {
 	finalClassList := []string{"math", "science", "english", "lunch"}
-	students := GenerateTestData()
-	err := CreateNewStudents(students)
+	var (
+		name1          = "Mittens"
+		currentYear    = 11
+		graduationYear = 2024
+		avgGPA         = 3.8
+		age            = 16
+		dob            = time.Date(2007, time.February, 8, 4, 5, 5, 5, time.Local)
+	)
+	// Create
+	student, err := CreateNewStudent(name1, currentYear, graduationYear, avgGPA, age, dob, true)
 	if err != nil {
-		log.Println(" err : ", err)
-	}
-	reportCardsM := []ReportCard{}
-	for _, student := range students {
-		reportCard, err := CreateReportCard(student.StudentID)
-		if err != nil {
-			log.Println(" err : ", err)
-		}
-		reportCardsM = append(reportCardsM, reportCard)
+		t.Errorf(" err : %v", err)
 	}
 
-	th.AssertEqual(t, "len reportcards generated", len(reportCardsM), 10)
-	newReportCard, err := GetReportCard(reportCardsM[0].StudentID)
+	reportCard, err := CreateReportCard(student.StudentID)
 	if err != nil {
-		log.Println(" err : ", err)
+		t.Errorf(" err : %v", err)
+	}
+
+	newReportCard, err := GetReportCard(reportCard.StudentID)
+	if err != nil {
+		t.Errorf(" err : %v", err)
 	}
 	if len(newReportCard.StudentID) > 0 {
-		th.AssertEqual(t, "Math", newReportCard.Math, reportCardsM[0].Math)
-		th.AssertEqual(t, "Science", newReportCard.Science, reportCardsM[0].Science)
-		th.AssertEqual(t, "English", newReportCard.English, reportCardsM[0].English)
-		th.AssertEqual(t, "Physical_ed", newReportCard.PhysicalED, reportCardsM[0].PhysicalED)
-		th.AssertEqual(t, "Lunch", newReportCard.Lunch, reportCardsM[0].Lunch)
+		th.AssertEqual(t, "Math", newReportCard.Math, reportCard.Math)
+		th.AssertEqual(t, "Science", newReportCard.Science, reportCard.Science)
+		th.AssertEqual(t, "English", newReportCard.English, reportCard.English)
+		th.AssertEqual(t, "Physical_ed", newReportCard.PhysicalED, reportCard.PhysicalED)
+		th.AssertEqual(t, "Lunch", newReportCard.Lunch, reportCard.Lunch)
 	} else {
 		fmt.Println("didn't get report card skipping tests")
 	}
@@ -41,7 +46,7 @@ func Test_ReportCardCrud(t *testing.T) {
 	// dat 4.0 tho
 	tempClassList := []string{"math", "science", "english", "football"}
 	opts := UpdateReportCardOptions{
-		StudentID:    students[0].StudentID,
+		StudentID:    student.StudentID,
 		Math:         4.0,
 		Science:      4.0,
 		English:      4.0,
@@ -51,11 +56,11 @@ func Test_ReportCardCrud(t *testing.T) {
 	}
 	err = opts.UpdateReportCard()
 	if err != nil {
-		log.Println(" err : ", err)
+		t.Errorf(" err updating report card: %v", err)
 	}
-	updatedReport, err := GetReportCard(students[0].StudentID)
+	updatedReport, err := GetReportCard(student.StudentID)
 	if err != nil {
-		log.Println(" err : ", err)
+		t.Errorf(" err : %v", err)
 	}
 	if len(updatedReport.StudentID) > 0 {
 		th.AssertEqual(t, "Math", updatedReport.Math, opts.Math)
@@ -71,7 +76,7 @@ func Test_ReportCardCrud(t *testing.T) {
 
 	// Joined a gang: ruined the 4.0
 	opts = UpdateReportCardOptions{
-		StudentID:       students[0].StudentID,
+		StudentID:       student.StudentID,
 		Math:            2.3,
 		Science:         3.1,
 		English:         3.4,
@@ -82,11 +87,11 @@ func Test_ReportCardCrud(t *testing.T) {
 	}
 	err = opts.UpdateReportCard()
 	if err != nil {
-		log.Println(" err : ", err)
+		t.Errorf(" err updating report card: %v", err)
 	}
-	updatedReport, err = GetReportCard(students[0].StudentID)
+	updatedReport, err = GetReportCard(student.StudentID)
 	if err != nil {
-		log.Println(" err : ", err)
+		t.Errorf(" err getting report card: %v", err)
 	}
 	if len(updatedReport.StudentID) > 0 {
 		th.AssertEqual(t, "Math", updatedReport.Math, opts.Math)
@@ -98,13 +103,12 @@ func Test_ReportCardCrud(t *testing.T) {
 			th.AssertEqual(t, "list check: ", updatedReport.ClassList, finalClassList)
 		}
 	}
-
-	err = DeleteBatchReportCard(students)
+	err = DeleteReportCard(student.StudentID)
 	if err != nil {
-		log.Println(" err : ", err)
+		t.Errorf(" err deleting report card : %v", err)
 	}
-	_, err = GetReportCard(students[0].StudentID)
+	_, err = GetReportCard(student.StudentID)
 	if err == nil {
-		log.Fatal("get succeeded shouldn't have. sad")
+		t.Error("get succeeded shouldn't have. sad")
 	}
 }

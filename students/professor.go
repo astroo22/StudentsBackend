@@ -52,7 +52,7 @@ func GetProfessor(professorID string) (Professor, error) {
 	getStatement := `SELECT * FROM Professors WHERE professor_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Println(" err : ", err)
+		log.Printf(" err : %v", err)
 	}
 	defer db.Close()
 	prof, err := ScanProf(db.QueryRow(getStatement, professorID))
