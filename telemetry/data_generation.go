@@ -15,6 +15,8 @@ import (
 	"github.com/lib/pq"
 )
 
+// this file and telemetry.go will have
+
 func BatchUploadTestData(studentList []students.Student, profs []students.Professor, classes []students.Class, reportCards []students.ReportCard, err error) error {
 	if err != nil {
 		return err
@@ -275,19 +277,3 @@ func createProfessors(profs []students.Professor) error {
 	}
 	return nil
 }
-
-// // i can probably make this more performant later
-// func GenerateClasses(grade int, profID string, subject string, roster []string) (students.Class, error) {
-// 	class, err := students.CreateClass(grade, profID, subject, roster)
-// 	if err != nil {
-// 		return students.Class{}, err
-// 	}
-// 	// class := Class{
-// 	// 	ClassID:       uuid.New().String(),
-// 	// 	TeachingGrade: teachingGrade,
-// 	// 	ProfessorID:   professorID,
-// 	// 	Subject:       subject,
-// 	// 	Roster:        roster,
-// 	// }
-// 	// this function also needs to update prof classlist
-// }

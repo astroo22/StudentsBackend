@@ -1,9 +1,5 @@
 package telemetry
 
-import (
-	"testing"
-)
-
 // func Test_BatchStudentsCreate(t *testing.T) {
 // 	// this tests CreateStudent and CreateStudents so creation in mass also works.
 // 	students := GenerateTestData()
@@ -19,20 +15,20 @@ import (
 // 	}
 // }
 
-func Test_DataGen(t *testing.T) {
-	students, professors, classes, reportcards, err := GenerateTestData(30, 1)
-	if err != nil {
-		t.Errorf("generation failed: %v", err)
-	}
-	err = BatchUploadTestData(students, professors, classes, reportcards, nil)
-	if err != nil {
-		t.Errorf("upload failed: %v", err)
-	}
-	// fmt.Printf("STUDENTS: %v", students)
-	// fmt.Println("")
-	// fmt.Printf("PROFESSORS: %v", professors)
-	// fmt.Println("")
-	// fmt.Printf("CLASSES: %v", classes)
-	// fmt.Println("")
-	// fmt.Printf("REPORTCARDS: %v", reportcards)
-}
+// func Test_DataGen(t *testing.T) {
+// 	students, professors, classes, reportcards, err := GenerateTestData(30, 1)
+// 	if err != nil {
+// 		t.Errorf("generation failed: %v", err)
+// 	}
+// 	err = BatchUploadTestData(students, professors, classes, reportcards, nil)
+// 	if err != nil {
+// 		t.Errorf("upload failed: %v", err)
+// 	}
+// 	// fmt.Printf("STUDENTS: %v", students)
+// 	// fmt.Println("")
+// 	// fmt.Printf("PROFESSORS: %v", professors)
+// 	// fmt.Println("")
+// 	// fmt.Printf("CLASSES: %v", classes)
+// 	// fmt.Println("")
+// 	// fmt.Printf("REPORTCARDS: %v", reportcards)
+// }

@@ -2,7 +2,8 @@ package client
 
 import "time"
 
-// need to create a section of errors and distinguish errors throughout
+// need to create a section of errors
+// need to label errors throughout
 
 type Student_API struct {
 	StudentID      string    `json:"studentid"`
@@ -15,7 +16,6 @@ type Student_API struct {
 	Enrolled       bool      `json:"enrolled"`
 }
 
-// need one for professors
 type Professor_API struct {
 	ProfessorID string   `json:"professorid"`
 	Name        string   `json:"name"`

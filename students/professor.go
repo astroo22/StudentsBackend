@@ -27,6 +27,7 @@ type UpdateProfessorOptions struct {
 	RemoveClassList []string
 }
 
+// CREATE
 func CreateProfessor(name string) (Professor, error) {
 	return createProfessor(name)
 }
@@ -62,6 +63,7 @@ func GetProfessor(professorID string) (Professor, error) {
 	return prof, nil
 }
 
+// UPDATE
 func (opts UpdateProfessorOptions) UpdateProfessor() error {
 	return opts.updateProfessor()
 }
@@ -119,6 +121,7 @@ func (opts UpdateProfessorOptions) prepProfessorClassUpdate() ([]string, error) 
 	return ret, nil
 }
 
+// DELETE
 func DeleteProfessor(professorID string) error {
 	return deleteProfessor(professorID)
 }
@@ -137,11 +140,11 @@ func deleteProfessor(professorID string) error {
 	return nil
 }
 
+// SCANS
 func ScanProf(row *sql.Row) (Professor, error) {
 	return scanProf(row)
 }
 
-// this is going to error on nulls will fix when I write testing. This will also need to be fixed in class and grades probably
 func scanProf(row *sql.Row) (Professor, error) {
 	var (
 		prof      = Professor{}
