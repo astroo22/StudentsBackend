@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"math/rand"
 	"strings"
 	"students/sqlgeneric"
 	"time"
@@ -41,20 +40,13 @@ func CreateNewStudent(name string, currentYear int, graduationYear int, avgGPA f
 	return createNewStudent(name, currentYear, graduationYear, avgGPA, age, dob, enrolled)
 }
 
-// maybe return entire student later?
 func createNewStudent(name string, currentYear int, graduationYear int, avgGPA float64, age int, dob time.Time, enrolled bool) (Student, error) {
-	if avgGPA == 0.0 {
-		rand.Seed(time.Now().UnixNano())
-		randomFloat := rand.Float64() * 4.0
-		avgGPA = randomFloat
-	}
 	insertStatement := `INSERT INTO STUDENTS("student_id","name","current_year","graduation_year","avg_gpa","age","dob","enrolled") VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`
-	//dobStr := dob.Format("2006-01-02")
-	//fmt.Println(dobStr)
 	studentID := uuid.New().String()
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Println(" err : ", err)
+		return Student{}, err
 	}
 	defer db.Close()
 	_, err = db.Exec(insertStatement, studentID, name, currentYear, graduationYear, avgGPA, age, dob, enrolled)
@@ -82,6 +74,7 @@ func getStudent(studentID string) (Student, error) {
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Println(" err : ", err)
+		return Student{}, err
 	}
 	defer db.Close()
 	ret, err := ScanStudent(db.QueryRow(getStatement, studentID))
@@ -95,6 +88,7 @@ func GetAllStudents() ([]Student, error) {
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Println(err)
+		return nil, err
 	}
 	defer db.Close()
 	ret, err := db.Query(getStatement)
@@ -163,6 +157,7 @@ func deleteStudent(studentID string) error {
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Println(" err : ", err)
+		return err
 	}
 	defer db.Close()
 	_, err = db.Exec(deleteStatement, studentID)

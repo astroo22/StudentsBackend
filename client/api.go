@@ -24,7 +24,7 @@ type Professor_API struct {
 }
 
 type ReportCard_API struct {
-	StudentID  string   `json:"studentID"`
+	StudentID  string   `json:"studentid"`
 	Math       float64  `json:"math"`
 	Science    float64  `json:"science"`
 	English    float64  `json:"english"`
@@ -40,4 +40,13 @@ type Class_API struct {
 	Subject       string   `json:"subject"`
 	Roster        []string `json:"roster,omitempty"`
 	ClassAvg      int      `json:"class_avg,omitempty"`
+}
+
+type School_API struct {
+	SchoolID      string   `json:"schoolid"`
+	SchoolOwnerID string   `json:"schoolownerid"`
+	SchoolName    string   `json:"schoolname"`
+	ProfessorList []string `json:"professorlist,omitempty"`
+	ClassList     []string `json:"classlist,omitempty"`
+	StudentList   []string `json:"studentlist,omitempty"`
 }
