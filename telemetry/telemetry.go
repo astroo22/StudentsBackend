@@ -7,6 +7,49 @@ import (
 	"github.com/lib/pq"
 )
 
+// NewSchool will be a handler allowing the user to generate new data
+func NewSchool(studentsPerGrade int) error {
+	err := DeleteTables()
+	if err != nil {
+		return err
+	}
+	err = CreateSchool(studentsPerGrade)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// FigureDerivedDate: WIll run a db update on avg's should be used after a generation
+// will probably tie to a handler to get updates whenever
+func FigureDerivedData() error {
+	err := UpdateClassAvgs()
+	if err != nil {
+		return err
+	}
+	err = UpdateAllProfessorStudentAvgs()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// CreateSchool: creates a school of 5 classes with 5 professors per grade with 12 grades.
+func CreateSchool(studentsPerGrade int) error {
+	return createSchool(studentsPerGrade)
+}
+
+func createSchool(studentsPerGrade int) error {
+	for i := 1; i <= 12; i++ {
+		err := BatchUploadTestData(GenerateData(studentsPerGrade, i))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// UpdateProfessorStudentAvg: updates specific professors student avg
 func UpdateProfessorStudentAvg(profID string) (float64, error) {
 	return updateProfessorStudentAvg(profID)
 }
@@ -164,19 +207,34 @@ func updateProfessorsClassList(classList []students.Class) error {
 	return nil
 }
 
-// function to update values that cannot be
-func UpdateDerivedData(classList []students.Class) error {
-	err := UpdateClassAvgs()
-	if err != nil {
-		return err
-	}
-	err = UpdateProfessorsClassList(classList)
-	if err != nil {
-		return err
-	}
-	err = UpdateAllProfessorStudentAvgs()
-	if err != nil {
-		return err
-	}
-	return nil
-}
+// func UpdateStudentAvgs() error {
+// 	// Get a list of all students from the database
+// 	studentList, err := students.GetAllStudents()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	reportCardList, err := students.GetAllReportCards()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	// Update the average GPA for each student
+// 	for _, student := range studentList {
+// 		for _, reportCard := range reportCardList {
+// 			if student.StudentID == reportCard.StudentID {
+// 				avgGPA := (reportCard.Math + reportCard.Science + reportCard.English + reportCard.PhysicalED + reportCard.Lunch) / 5
+// 				avgGPA = math.Round(avgGPA*100) / 100 // Round to two decimal places
+// 				opts := students.UpdateStudentOptions{
+// 					StudentID: student.StudentID,
+// 					AvgGPA:    avgGPA,
+// 					Enrolled:  true,
+// 				}
+// 				err = opts.UpdateStudent()
+// 				if err != nil {
+// 					return err
+// 				}
+// 				continue
+// 			}
+// 		}
+// 	}
+// 	return nil
+// }

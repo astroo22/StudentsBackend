@@ -3,6 +3,7 @@ package telemetry
 import (
 	"fmt"
 	"log"
+	"math"
 	"math/rand"
 	"strings"
 	"time"
@@ -15,22 +16,21 @@ import (
 	"github.com/lib/pq"
 )
 
-// this file and telemetry.go will have
-
 func BatchUploadTestData(studentList []students.Student, profs []students.Professor, classes []students.Class, reportCards []students.ReportCard, err error) error {
 	if err != nil {
 		return err
 	}
 
 	// set avg gpas
-	for _, student := range studentList {
+	for i, student := range studentList {
 		for _, rc := range reportCards {
 			if student.StudentID == rc.StudentID {
-				student.AvgGPA = (rc.English + rc.Lunch + rc.Math + rc.PhysicalED + rc.Science) / 5
-				break
+				studentList[i].AvgGPA = math.Round(((rc.English+rc.Lunch+rc.Math+rc.PhysicalED+rc.Science)/5)*100) / 100
+				continue
 			}
 		}
 	}
+
 	// upload as batch
 	err = CreateNewStudents(studentList)
 	if err != nil {
@@ -46,14 +46,19 @@ func BatchUploadTestData(studentList []students.Student, profs []students.Profes
 	if err != nil {
 		return err
 	}
+	// lastly update classlists of professors
+	err = UpdateProfessorsClassList(classes)
+	if err != nil {
+		return err
+	}
 	fmt.Println("professors successfully created")
 	fmt.Printf("Generated: %d students, %d report cards, %d professors and %d classes", len(studentList), len(reportCards), len(profs), len(classes))
 	fmt.Println("")
 	return nil
 }
 
-// GenerateTestDate:
-func GenerateTestData(numStutotal int, grade int) ([]students.Student, []students.Professor, []students.Class, []students.ReportCard, error) {
+// GenerateTestData:
+func GenerateData(numStutotal int, grade int) ([]students.Student, []students.Professor, []students.Class, []students.ReportCard, error) {
 	studentList, err := GenerateStudents(numStutotal, grade)
 	if err != nil {
 		return nil, nil, nil, nil, err
@@ -93,8 +98,8 @@ func GenerateStudents(numStudents int, grade int) ([]students.Student, error) {
 	studentList := make([]students.Student, numStudents)
 
 	for i := 0; i < numStudents; i++ {
-		currentYear := time.Now().Year()
-		graduationYear := currentYear + (12 - grade)
+		currentYear := grade
+		graduationYear := time.Now().Year() + (12 - grade)
 
 		age := rng.Intn(2) + 7 + grade
 
@@ -206,30 +211,10 @@ func createReportCards(reportCards []students.ReportCard) error {
 	}
 	return nil
 }
-func DeleteBatchReportCard(students []students.Student) error {
-	return deleteBatchReportCard(students)
-}
-func deleteBatchReportCard(students []students.Student) error {
-	batch := make([]string, 0, len(students))
-	batchVals := make([]interface{}, 0, len(students))
-	for n, student := range students {
-		batch = append(batch, fmt.Sprintf("$%d", n+1))
-		batchVals = append(batchVals, student.StudentID)
-	}
-	SQL := fmt.Sprintf(`DELETE FROM ReportCards WHERE student_id IN (%s)`, strings.Join(batch, ","))
-	db, err := sqlgeneric.Init()
-	if err != nil {
-		log.Println(" err : ", err)
-	}
-	defer db.Close()
-	_, err = db.Exec(SQL, batchVals...)
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
-// TODO: batch delete students.
+// TODO: batch deletes.
+// TODO: might just have some drop and create table statement that run the student generation based on size after set it up to a handler?
+// TODO: maybe do a run telemetry button and grabs the stat page for your front page?
 
 // PROFESSORS
 func GenerateProfessors(numProfs int) ([]students.Professor, error) {
@@ -272,6 +257,63 @@ func createProfessors(profs []students.Professor) error {
 	fmt.Println(values...)
 
 	_, err = db.Exec(insertStatement, values...)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func DeleteReportCards(students []students.Student) error {
+	return deleteReportCards(students)
+}
+func deleteReportCards(students []students.Student) error {
+	batch := make([]string, 0, len(students))
+	batchVals := make([]interface{}, 0, len(students))
+	for n, student := range students {
+		batch = append(batch, fmt.Sprintf("$%d", n+1))
+		batchVals = append(batchVals, student.StudentID)
+	}
+	SQL := fmt.Sprintf(`DELETE FROM ReportCards WHERE student_id IN (%s)`, strings.Join(batch, ","))
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		log.Println(" err : ", err)
+	}
+	defer db.Close()
+	_, err = db.Exec(SQL, batchVals...)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func DeleteTables() error {
+	return deleteTables()
+}
+func deleteTables() error {
+	var (
+		students    = `DELETE FROM Students`
+		reportCards = `DELETE FROM ReportCards`
+		classes     = `DELETE FROM Classes`
+		professors  = `DELETE FROM Professors`
+	)
+
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		log.Println(" err : ", err)
+	}
+	_, err = db.Exec(students)
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(reportCards)
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(classes)
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(professors)
 	if err != nil {
 		return err
 	}

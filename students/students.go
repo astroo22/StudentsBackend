@@ -91,7 +91,7 @@ func getStudent(studentID string) (Student, error) {
 	return ret, nil
 }
 func GetAllStudents() ([]Student, error) {
-	getStatement := `SELECT * FROM STUDENTS`
+	getStatement := `SELECT * FROM STUDENTS WHERE Enrolled IS TRUE`
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Println(err)

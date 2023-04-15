@@ -25,7 +25,7 @@ func TestCreateStudentHandler(t *testing.T) {
 	form.Add("name", "John Doe")
 	form.Add("current_year", "3")
 	form.Add("graduation_year", "2023")
-	form.Add("gpa", "3.5")
+	form.Add("avg_gpa", "3.5")
 	form.Add("age", "21")
 	form.Add("dob", "2000-01-01")
 	form.Add("enrolled", "true")
@@ -119,20 +119,17 @@ func TestGetStudentHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error unmarshalling response body: %s", err)
 	}
-	//fmt.Println(respBody)
 
 	studentapi := client.Student_API{}
 	err = json.Unmarshal(rr.Body.Bytes(), &studentapi)
 	if err != nil {
 		t.Fatalf("error unmarshalling response body: %s", err)
 	}
-	//fmt.Println(studentapi)
 	th.AssertEqual(t, "student name", studentapi.Name, student.Name)
 	th.AssertEqual(t, "current year", studentapi.CurrentYear, student.CurrentYear)
 	th.AssertEqual(t, "graduation year", studentapi.GraduationYear, student.GraduationYear)
 	th.AssertEqual(t, "gpa", studentapi.AvgGPA, student.AvgGPA)
 	th.AssertEqual(t, "api test", studentapi.Age, student.Age)
-	//th.AssertEqual(t, "dob", studentapi.Dob, "2000-01-01")
 	th.AssertEqual(t, "enrolled", studentapi.Enrolled, true)
 }
 func TestUpdateStudentHandler(t *testing.T) {
@@ -145,7 +142,7 @@ func TestUpdateStudentHandler(t *testing.T) {
 	//form.Add("name", "mittens")
 	form.Add("current_year", "6")
 	form.Add("graduation_year", "2032")
-	form.Add("gpa", "3.7")
+	form.Add("avg_gpa", "3.7")
 	form.Add("age", "12")
 	form.Add("dob", "2013-01-07")
 	form.Add("enrolled", "true")

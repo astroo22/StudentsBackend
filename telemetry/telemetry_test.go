@@ -11,7 +11,7 @@ func Test_Telemetry(t *testing.T) {
 	var (
 		studentNUM = 30
 	)
-	studentList, professors, classes, reportcards, err := GenerateTestData(studentNUM, 1)
+	studentList, professors, classes, reportcards, err := GenerateData(studentNUM, 1)
 	if err != nil {
 		t.Errorf("generation failed: %v", err)
 	}
@@ -22,7 +22,7 @@ func Test_Telemetry(t *testing.T) {
 	if !th.AssertEqual(t, "students len", len(studentList), studentNUM) {
 		t.Fatal("not enough students will create panic if continue")
 	}
-	err = UpdateDerivedData(classes)
+	err = FigureDerivedData()
 	if err != nil {
 		t.Errorf("update of derived data failed")
 	}
@@ -35,6 +35,9 @@ func Test_Telemetry(t *testing.T) {
 		th.AssertEqual(t, "student name", student.Name, studentList[0].Name)
 		th.AssertEqual(t, "student age", student.Age, studentList[0].Age)
 		th.AssertEqual(t, "student avg gpa", student.AvgGPA, studentList[0].AvgGPA)
+		if student.AvgGPA == 0.0 {
+			t.Errorf("avggpa didn't compile")
+		}
 		th.AssertEqual(t, "student current year", student.CurrentYear, studentList[0].CurrentYear)
 		th.AssertEqual(t, "student name", student.GraduationYear, studentList[0].GraduationYear)
 	}
@@ -55,10 +58,21 @@ func Test_Telemetry(t *testing.T) {
 	} else {
 		th.AssertEqual(t, "prof name", prof.Name, professors[0].Name)
 	}
-	avg, err := UpdateProfessorStudentAvg(professors[0].ProfessorID)
+	_, err = UpdateProfessorStudentAvg(professors[0].ProfessorID)
 	if err != nil {
 		t.Errorf("prof get student avg failed: %v", err)
 	}
 	fmt.Println(prof)
-	fmt.Println(avg)
+	//fmt.Println(avg)
 }
+
+// func Test_TelemetryMassUpdates(t *testing.T) {
+// err := UpdateStudentAvgs()
+// if err != nil {
+// 	t.Error(err)
+// }
+// 	err := DeleteTables()
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+// }

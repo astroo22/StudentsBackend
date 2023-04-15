@@ -78,6 +78,24 @@ func getReportCard(studentID string) (ReportCard, error) {
 	}
 	return reportCard, nil
 }
+func GetAllReportCards() ([]ReportCard, error) {
+	getStatement := `SELECT * FROM REPORTCARDS`
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		log.Println(err)
+	}
+	defer db.Close()
+	ret, err := db.Query(getStatement)
+	if err != nil {
+		return nil, err
+	}
+	reportCards, err := ScanReportCards(ret)
+	if err != nil {
+		return nil, err
+	}
+	return reportCards, nil
+}
+
 func (opts UpdateReportCardOptions) UpdateReportCard() error {
 	return opts.updateReportCard()
 }
@@ -195,4 +213,31 @@ func ScanReportCard(row *sql.Row) (ReportCard, error) {
 		reportCard.ClassList = temp
 	}
 	return reportCard, nil
+}
+func ScanReportCards(rows *sql.Rows) ([]ReportCard, error) {
+	var (
+		reportCards []ReportCard
+		classList   []byte
+	)
+	defer rows.Close()
+	for rows.Next() {
+		reportCard := ReportCard{}
+		err := rows.Scan(
+			&reportCard.StudentID,
+			&reportCard.Math,
+			&reportCard.Science,
+			&reportCard.English,
+			&reportCard.PhysicalED,
+			&reportCard.Lunch,
+			&classList,
+		)
+		if err != nil {
+			return nil, err
+		}
+		temp := removeBrackets(strings.Split(string(classList), ","))
+		if len(temp) > 0 {
+			reportCard.ClassList = temp
+		}
+	}
+	return reportCards, nil
 }

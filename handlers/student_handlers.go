@@ -26,7 +26,7 @@ func CreateStudentHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Invalid request payload")
 		return
 	}
-	gpa, err := strconv.ParseFloat(r.FormValue("gpa"), 64)
+	gpa, err := strconv.ParseFloat(r.FormValue("avg_gpa"), 64)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "Invalid request payload")
@@ -89,6 +89,24 @@ func GetStudentHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Unexpected error mashalling class")
 		return
 	}
+	w.Write(ret)
+}
+
+// should I preload this with reportcards as well?
+func GetAllStudentsHandler(w http.ResponseWriter, r *http.Request) {
+	students, err := students.GetAllStudents()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "error on get all")
+		return
+	}
+	ret, err := json.Marshal(students)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "Unexpected error mashalling class")
+		return
+	}
+	fmt.Println("test log: return off all students")
 	w.Write(ret)
 }
 func UpdateStudentHandler(w http.ResponseWriter, r *http.Request) {

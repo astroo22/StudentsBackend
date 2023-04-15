@@ -42,7 +42,7 @@ func Test_CrudReportCardHandlers(t *testing.T) {
 	rr := httptest.NewRecorder()
 	// router
 	r := mux.NewRouter()
-	// TODO: if I dont by tonight tomorrow Maybe just make the POST method on /{student_id} as well
+
 	r.HandleFunc("/reportcard", CreateReportCardHandler).Methods("POST")
 	r.HandleFunc("/reportcard/{student_id}", GetReportCardHandler).Methods("GET")
 	r.HandleFunc("/reportcard/{student_id}", UpdateReportCardHandler).Methods("PUT")

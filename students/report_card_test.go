@@ -103,6 +103,8 @@ func Test_ReportCardCrud(t *testing.T) {
 			th.AssertEqual(t, "list check: ", updatedReport.ClassList, finalClassList)
 		}
 	}
+	defer DeleteStudent(student.StudentID)
+
 	err = DeleteReportCard(student.StudentID)
 	if err != nil {
 		t.Errorf(" err deleting report card : %v", err)
