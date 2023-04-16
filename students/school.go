@@ -41,7 +41,8 @@ func CreateSchool(name, ownerID string, professorList []string, classList []stri
 	return createSchool(name, ownerID, professorList, classList, studentList)
 }
 func createSchool(name, ownerID string, professorList []string, classList []string, studentList []string) (School, error) {
-
+	// this needs to do a check of where I store ownerID's in the future and make sure it exists
+	// if ownerID exists continue if not return.
 	schoolID := uuid.New().String()
 	insertStatement := `INSERT INTO Schools("school_id","owner_id","school_name","professor_list","class_list","student_list") VALUES($1,$2,$3,$4,$5,$6)`
 	db, err := sqlgeneric.Init()
@@ -88,7 +89,7 @@ func (opts UpdateSchoolOptions) UpdateSchool() error {
 }
 func (opts UpdateSchoolOptions) updateSchool() error {
 	var (
-		SQL    = `UPDATE School SET`
+		SQL    = `UPDATE Schools SET`
 		values []interface{}
 		i      = 2
 	)
@@ -127,6 +128,7 @@ func (opts UpdateSchoolOptions) updateSchool() error {
 		log.Println(" err : ", err)
 	}
 	fmt.Println(SQL)
+	fmt.Println(values...)
 	defer db.Close()
 	_, err = db.Exec(SQL, values...)
 	if err != nil {
@@ -152,7 +154,10 @@ func (opts UpdateSchoolOptions) UpdateHelper() (School, error) {
 	}
 	if len(opts.RemoveFromProfessorList) > 0 {
 		for _, professor := range opts.RemoveFromProfessorList {
-			school.ProfessorList = remove(school.ProfessorList, professor)
+			if contains(school.ProfessorList, professor) {
+				fmt.Printf("removing : %v ", professor)
+				school.ProfessorList = remove(school.ProfessorList, professor)
+			}
 		}
 	}
 	// classlist
@@ -165,6 +170,7 @@ func (opts UpdateSchoolOptions) UpdateHelper() (School, error) {
 	}
 	if len(opts.RemoveFromClassList) > 0 {
 		for _, class := range opts.RemoveFromClassList {
+			fmt.Printf("removing : %v ", class)
 			school.ClassList = remove(school.ClassList, class)
 		}
 	}
@@ -178,7 +184,10 @@ func (opts UpdateSchoolOptions) UpdateHelper() (School, error) {
 	}
 	if len(opts.RemoveFromStudentList) > 0 {
 		for _, student := range opts.RemoveFromStudentList {
-			school.StudentList = remove(school.StudentList, student)
+			if contains(school.StudentList, student) {
+				fmt.Printf("removing : %v ", student)
+				school.StudentList = remove(school.StudentList, student)
+			}
 		}
 	}
 	return school, nil
@@ -194,14 +203,18 @@ func contains(slice []string, str string) bool {
 	return false
 }
 
-// Utility function to remove a string from a string slice.
 func remove(slice []string, str string) []string {
+	index := -1
 	for i, s := range slice {
 		if s == str {
-			return append(slice[:i], slice[i+1:]...)
+			index = i
+			break
 		}
 	}
-	return slice
+	if index == -1 {
+		return slice
+	}
+	return append(slice[:index], slice[index+1:]...)
 }
 
 // DELETE SCHOOL
@@ -245,13 +258,14 @@ func scanSchool(row *sql.Row) (School, error) {
 		return School{}, err
 	}
 	if professorList.Valid {
-		school.ProfessorList = strings.Split(professorList.String, ",")
+		school.ProfessorList = removeBrackets(strings.Split(professorList.String, ","))
 	}
 	if classList.Valid {
-		school.ClassList = strings.Split(classList.String, ",")
+
+		school.ClassList = removeBrackets(strings.Split(classList.String, ","))
 	}
 	if StudentList.Valid {
-		school.StudentList = strings.Split(StudentList.String, ",")
+		school.StudentList = removeBrackets(strings.Split(StudentList.String, ","))
 	}
 	return school, nil
 

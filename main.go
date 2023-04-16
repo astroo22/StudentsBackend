@@ -41,10 +41,17 @@ func main() {
 	router.HandleFunc("/professors/{prof_id}", handlers.UpdateProfessorHandler).Methods("PUT")
 	router.HandleFunc("/professors/{prof_id}", handlers.DeleteProfessorHandler).Methods("DELETE")
 
+	// Set up routes for the school
+	router.HandleFunc("/schools/{school_id}", handlers.GetSchoolHandler).Methods("GET")
+	router.HandleFunc("/schools/{school_id}", handlers.UpdateSchoolHandler).Methods("PUT")
+	router.HandleFunc("/schools/{school_id}", handlers.DeleteSchoolHandler).Methods("DELETE")
+
 	//create telemetry routes here
 	// yes yes routes they need but handlers they need first
 	router.HandleFunc("/telemetry", handlers.UpdateDerivedData)
-	router.HandleFunc("/telemetry/{num_per_grade}", handlers.CreateSchoolHandler)
+
+	// data generation handlers here
+	router.HandleFunc("/telemetry/{owner_id}", handlers.CreateNewSchoolHandler).Methods("POST")
 
 	// Start the HTTP server on port 3000
 	log.Printf("Starting server on port 3000")

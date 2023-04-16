@@ -16,13 +16,73 @@ import (
 	"github.com/lib/pq"
 )
 
+// This file is mostly going to be for the generation of data and batch uploading that data in a performant way
+// TODO: consider breaking file apart into parts maybe? would reduce length.
+
+// todo: fix this. Doesn't create school object naming is incorrect now with new addition
+// CreateSchool: creates a school of 5 classes with 5 professors per grade with 12 grades.
+func NewSchool(studentsPerGrade int, ownerID, schoolName string) (students.School, error) {
+	return newSchool(studentsPerGrade, ownerID, schoolName)
+}
+
+func newSchool(studentsPerGrade int, ownerID, schoolName string) (students.School, error) {
+	var (
+		// struct holders
+		roster         []students.Student
+		profList       []students.Professor
+		classList      []students.Class
+		reportCardList []students.ReportCard
+		// empty for returns until last line
+		school students.School
+		// list for school
+		studentList   []string
+		professorList []string
+		classesList   []string
+	)
+	for i := 1; i <= 12; i++ {
+		stus, profs, classes, rcs, err := GenerateData(studentsPerGrade, i)
+		if err != nil {
+			return school, err
+		}
+		roster = append(roster, stus...)
+		profList = append(profList, profs...)
+		classList = append(classList, classes...)
+		reportCardList = append(reportCardList, rcs...)
+	}
+	err := BatchUploadTestData(roster, profList, classList, reportCardList, nil)
+	if err != nil {
+		return school, err
+	}
+	for _, stu := range roster {
+		studentList = append(studentList, stu.StudentID)
+	}
+	for _, prof := range profList {
+		professorList = append(professorList, prof.ProfessorID)
+	}
+	for _, class := range classList {
+		classesList = append(classesList, class.ClassID)
+	}
+	school, err = students.CreateSchool(schoolName, ownerID, professorList, classesList, studentList)
+	if err != nil {
+		return school, err
+	}
+	return school, nil
+}
+
 func BatchUploadTestData(studentList []students.Student, profs []students.Professor, classes []students.Class, reportCards []students.ReportCard, err error) error {
 	if err != nil {
 		return err
 	}
+	// var (
+	// 	roster    []string
+	// 	proflist  []string
+	// 	classlist []string
+	// 	school students.School
+	// )
 
-	// set avg gpas
+	// set avg gpas also grab studentids
 	for i, student := range studentList {
+		//roster = append(roster, student.StudentID)
 		for _, rc := range reportCards {
 			if student.StudentID == rc.StudentID {
 				studentList[i].AvgGPA = math.Round(((rc.English+rc.Lunch+rc.Math+rc.PhysicalED+rc.Science)/5)*100) / 100
@@ -30,6 +90,12 @@ func BatchUploadTestData(studentList []students.Student, profs []students.Profes
 			}
 		}
 	}
+	// for _, prof := range profs {
+	// 	proflist = append(proflist, prof.ProfessorID)
+	// }
+	// for _, class := range classes {
+	// 	classlist = append(classlist, class.ClassID)
+	// }
 
 	// upload as batch
 	err = CreateNewStudents(studentList)

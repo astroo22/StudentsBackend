@@ -86,7 +86,7 @@ func GetStudentHandler(w http.ResponseWriter, r *http.Request) {
 	ret, err := json.Marshal(student)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, "Unexpected error mashalling class")
+		fmt.Fprint(w, "Unexpected error mashalling student")
 		return
 	}
 	w.Write(ret)

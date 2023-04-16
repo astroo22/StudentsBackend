@@ -1,7 +1,6 @@
 package telemetry
 
 import (
-	"fmt"
 	"students/students"
 	th "students/testhelpers"
 	"testing"
@@ -62,7 +61,7 @@ func Test_Telemetry(t *testing.T) {
 	if err != nil {
 		t.Errorf("prof get student avg failed: %v", err)
 	}
-	fmt.Println(prof)
+	//fmt.Println(prof)
 	//fmt.Println(avg)
 }
 

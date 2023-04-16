@@ -7,19 +7,6 @@ import (
 	"github.com/lib/pq"
 )
 
-// NewSchool will be a handler allowing the user to generate new data
-func NewSchool(studentsPerGrade int) error {
-	err := DeleteTables()
-	if err != nil {
-		return err
-	}
-	err = CreateSchool(studentsPerGrade)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // FigureDerivedDate: WIll run a db update on avg's should be used after a generation
 // will probably tie to a handler to get updates whenever
 func FigureDerivedData() error {
@@ -30,21 +17,6 @@ func FigureDerivedData() error {
 	err = UpdateAllProfessorStudentAvgs()
 	if err != nil {
 		return err
-	}
-	return nil
-}
-
-// CreateSchool: creates a school of 5 classes with 5 professors per grade with 12 grades.
-func CreateSchool(studentsPerGrade int) error {
-	return createSchool(studentsPerGrade)
-}
-
-func createSchool(studentsPerGrade int) error {
-	for i := 1; i <= 12; i++ {
-		err := BatchUploadTestData(GenerateData(studentsPerGrade, i))
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }
