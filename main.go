@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"students/handlers"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -12,6 +13,8 @@ import (
 func main() {
 
 	fmt.Println("HEREEE WE GOOOOOO")
+	lastUpdate := time.Now()
+	interval := 10 * time.Minute
 	// Create the HTTP server and set the router
 	//router := http.NewServeMux()
 	router := mux.NewRouter()
@@ -42,16 +45,25 @@ func main() {
 	router.HandleFunc("/professors/{prof_id}", handlers.DeleteProfessorHandler).Methods("DELETE")
 
 	// Set up routes for the school
+	router.HandleFunc("/schools", handlers.GetAllSchools).Methods("GET")
 	router.HandleFunc("/schools/{school_id}", handlers.GetSchoolHandler).Methods("GET")
 	router.HandleFunc("/schools/{school_id}", handlers.UpdateSchoolHandler).Methods("PUT")
 	router.HandleFunc("/schools/{school_id}", handlers.DeleteSchoolHandler).Methods("DELETE")
+	router.HandleFunc("/schools/{school_id}/classes", handlers.GetClassesForSchoolHandler).Methods("GET")
 
 	//create telemetry routes here
 	// yes yes routes they need but handlers they need first
-	router.HandleFunc("/telemetry", handlers.UpdateDerivedData)
+	// updates avgs. Will probably just be a db refresh function near the end
+	updateDerivedDataHandler := handlers.UpdateDerivedDataHandler(lastUpdate, interval)
+	router.HandleFunc("/telemetry", updateDerivedDataHandler)
+	//router.HandleFunc("/telemetry", handlers.UpdateDerivedData)
 
-	// data generation handlers here
+	// data generation handlers here going to include under telemetry
 	router.HandleFunc("/telemetry/{owner_id}", handlers.CreateNewSchoolHandler).Methods("POST")
+
+	// These are going to be my telemetry handlers
+	// gets all grade avg for a school
+	router.HandleFunc("/telemetry/{school_id}/classes/avg_gpa", handlers.GetGradeAvgForSchoolHandler).Methods("GET")
 
 	// Start the HTTP server on port 3000
 	log.Printf("Starting server on port 3000")

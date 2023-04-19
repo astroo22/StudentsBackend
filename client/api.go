@@ -50,3 +50,9 @@ type School_API struct {
 	ClassList     []string `json:"classlist,omitempty"`
 	StudentList   []string `json:"studentlist,omitempty"`
 }
+
+// unsure if I agree with this structures existance but ordering is needed in front end to be more performant
+type GradeAvg_API struct {
+	Grade  int     `json:"grade"`
+	AvgGPA float64 `json:"avggpa"`
+}

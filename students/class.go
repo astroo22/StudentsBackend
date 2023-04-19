@@ -68,6 +68,33 @@ func getClass(classID string) (Class, error) {
 	return class, nil
 
 }
+func GetClasses(classIDs []string) ([]Class, error) {
+	return getClasses(classIDs)
+}
+func getClasses(classIDs []string) ([]Class, error) {
+	placeholders := make([]string, 0, len(classIDs))
+	batchVals := make([]interface{}, 0, len(classIDs))
+	getStatement := fmt.Sprintf(`SELECT * FROM Classes WHERE class_id = %s`, strings.Join(placeholders, ","))
+	for i := 0; i < len(classIDs); i++ {
+		placeholders = append(placeholders, fmt.Sprintf("($%d)", i))
+		batchVals = append(batchVals, classIDs[i])
+	}
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		log.Println(" err : ", err)
+	}
+	defer db.Close()
+	data, err := db.Query(getStatement, classIDs)
+	if err != nil {
+		return nil, err
+	}
+	classes, err := ScanClasses(data)
+	if err != nil {
+		return nil, err
+	}
+	return classes, nil
+
+}
 func (opts UpdateClassOptions) UpdateClass() error {
 	return opts.updateClass()
 }
@@ -127,6 +154,39 @@ func (opts UpdateClassOptions) prepRosterUpdate() ([]string, error) {
 	}
 	ret = append(ret, opts.AddRoster...)
 	return ret, nil
+}
+
+func ScanClasses(rows *sql.Rows) ([]Class, error) {
+	defer rows.Close()
+	var (
+		classes  []Class
+		classAvg sql.NullFloat64
+		roster   []byte
+	)
+	for rows.Next() {
+		class := Class{}
+		err := rows.Scan(
+			&class.ClassID,
+			&class.TeachingGrade,
+			&class.ProfessorID,
+			&class.Subject,
+			&roster,
+			&classAvg,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if classAvg.Valid {
+			var value interface{}
+			value, err = classAvg.Value()
+			if err == nil {
+				class.ClassAvg = value.(float64)
+			}
+		}
+		classes = append(classes, class)
+	}
+	return classes, nil
+
 }
 func ScanClass(row *sql.Row) (Class, error) {
 	return scanClass(row)

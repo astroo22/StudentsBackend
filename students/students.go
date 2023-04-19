@@ -201,7 +201,7 @@ func ScanStudents(rows *sql.Rows) ([]Student, error) {
 			&student.Enrolled,
 		)
 		if err != nil {
-			return students, err
+			return nil, err
 		}
 		students = append(students, student)
 	}

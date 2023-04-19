@@ -15,6 +15,8 @@ type School struct {
 	SchoolID      string
 	OwnerID       string
 	SchoolName    string
+	AvgGPA        float64
+	Ranking       int
 	ProfessorList []string
 	ClassList     []string
 	StudentList   []string
@@ -81,6 +83,52 @@ func getSchool(schoolID string) (School, error) {
 		return School{}, err
 	}
 	return school, err
+}
+
+func GetAllSchools() ([]School, error) {
+	return getAllSchools()
+}
+func getAllSchools() ([]School, error) {
+	getStatement := `SELECT * FROM Schools`
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		log.Printf(" err : %v", err)
+	}
+	defer db.Close()
+	ret, err := db.Query(getStatement)
+	if err != nil {
+		return nil, err
+	}
+	schools, err := ScanSchools(ret)
+	if err != nil {
+		return nil, err
+	}
+	return schools, err
+}
+
+func GetClassesForSchool(schoolID string) ([]Class, error) {
+	return getClassesForSchool(schoolID)
+}
+func getClassesForSchool(schoolID string) ([]Class, error) {
+	query := `
+        SELECT c.*
+        FROM schools s, unnest(s.class_list) cl, classes c
+        WHERE s.school_id = $1 AND cl = c.class_id
+		ORDER BY c.class_avg DESC
+    `
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		log.Printf(" err : %v", err)
+	}
+	rows, err := db.Query(query, schoolID)
+	if err != nil {
+		return nil, err
+	}
+	classes, err := ScanClasses(rows)
+	if err != nil {
+		return nil, err
+	}
+	return classes, nil
 }
 
 // UPDATE
@@ -269,4 +317,45 @@ func scanSchool(row *sql.Row) (School, error) {
 	}
 	return school, nil
 
+}
+func ScanSchools(rows *sql.Rows) ([]School, error) {
+	return scanSchools(rows)
+}
+func scanSchools(rows *sql.Rows) ([]School, error) {
+	defer rows.Close()
+	var (
+		schools       = []School{}
+		professorList sql.NullString
+		classList     sql.NullString
+		StudentList   sql.NullString
+	)
+	for rows.Next() {
+		school := School{}
+		err := rows.Scan(
+			&school.SchoolID,
+			&school.OwnerID,
+			&school.SchoolName,
+			&professorList,
+			&classList,
+			&StudentList,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if professorList.Valid {
+			school.ProfessorList = removeBrackets(strings.Split(professorList.String, ","))
+		}
+		if classList.Valid {
+
+			school.ClassList = removeBrackets(strings.Split(classList.String, ","))
+		}
+		if StudentList.Valid {
+			school.StudentList = removeBrackets(strings.Split(StudentList.String, ","))
+		}
+		schools = append(schools, school)
+	}
+	if err := rows.Err(); err != nil {
+		return schools, err
+	}
+	return schools, nil
 }

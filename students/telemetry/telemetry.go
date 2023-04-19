@@ -1,11 +1,50 @@
 package telemetry
 
 import (
+	"fmt"
+	"students/client"
 	"students/sqlgeneric"
 	"students/students"
 
 	"github.com/lib/pq"
 )
+
+func GetGradeAvgForSchool(schoolID string) ([]client.GradeAvg_API, error) {
+	query := `
+        SELECT c.teaching_grade as grade, coalesce(avg(c.class_avg),0.0) as avg_gpa
+        FROM schools s, unnest(s.class_list) cl, classes c
+        WHERE s.school_id = $1 AND cl = c.class_id
+        GROUP BY grade
+        ORDER BY avg_gpa DESC
+    `
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	rows, err := db.Query(query, schoolID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	gradeAvgs := []client.GradeAvg_API{}
+	for rows.Next() {
+		gradeAvg := client.GradeAvg_API{}
+		err := rows.Scan(
+			&gradeAvg.Grade,
+			&gradeAvg.AvgGPA,
+		)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Printf("GradeAvg: %v", gradeAvg)
+		fmt.Println("")
+		gradeAvgs = append(gradeAvgs, gradeAvg)
+	}
+
+	return gradeAvgs, nil
+}
 
 // FigureDerivedDate: WIll run a db update on avg's should be used after a generation
 // will probably tie to a handler to get updates whenever

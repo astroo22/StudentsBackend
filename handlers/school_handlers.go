@@ -12,6 +12,42 @@ import (
 
 //decided no create school handler
 
+func GetAllSchools(w http.ResponseWriter, r *http.Request) {
+	schools, err := students.GetAllSchools()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "Internal server error")
+		return
+	}
+	ret, err := json.Marshal(schools)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "Unexpected error mashalling school")
+		return
+	}
+	w.Write(ret)
+}
+
+func GetClassesForSchoolHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	schoolID := vars["school_id"]
+
+	classes, err := students.GetClassesForSchool(schoolID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "Unexpected error retrieving classes")
+		return
+	}
+
+	ret, err := json.Marshal(classes)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "Unexpected error mashalling classes")
+		return
+	}
+	w.Write(ret)
+}
+
 // GetSchoolHandler
 func GetSchoolHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

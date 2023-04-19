@@ -1,9 +1,12 @@
 package telemetry
 
 import (
+	"fmt"
 	"students/students"
 	th "students/testhelpers"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 func Test_Telemetry(t *testing.T) {
@@ -65,13 +68,57 @@ func Test_Telemetry(t *testing.T) {
 	//fmt.Println(avg)
 }
 
-// func Test_TelemetryMassUpdates(t *testing.T) {
-// err := UpdateStudentAvgs()
-// if err != nil {
-// 	t.Error(err)
-// }
-// 	err := DeleteTables()
-// 	if err != nil {
-// 		t.Error(err)
-// 	}
-// }
+// test of derived data and getgradeavgforschool
+func Test_AvgUpdates(t *testing.T) {
+
+	var (
+		// schoolID so dont have to generate data
+		schoolID = "78e046f3-9220-4390-b6af-5f236afc24c7"
+		// numStdsGrade = 5
+		// owner_id     = uuid.New().String()
+		// schoolName   = "Rick and Morty Vindicators 4 "
+	)
+	// school, err := NewSchool(numStdsGrade, owner_id, schoolName)
+	// if err != nil {
+	// 	t.Error(err)
+	// }
+	avgs, err := GetGradeAvgForSchool(schoolID)
+	if err != nil {
+		t.Error(err)
+	}
+	th.AssertEqual(t, "should be nil", avgs, nil)
+	err = FigureDerivedData()
+	if err != nil {
+		t.Error(err)
+	}
+	avgs, err = GetGradeAvgForSchool(schoolID)
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(avgs)
+}
+
+func Test_TelemetryMassUpdates(t *testing.T) {
+	// err := UpdateStudentAvgs()
+	// if err != nil {
+	// 	t.Error(err)
+	// }
+	// 	err := DeleteTables()
+	// 	if err != nil {
+	// 		t.Error(err)
+	// 	}
+	//school names might write into creating script later:
+	// "PLUS ULTRA ACADEMY"
+	// "The Xavier Institute for Higher Learning #8"
+	// "Busta Rhymes Academy"
+	// "Fosters Home for Imaginary Friends"
+	//newschool
+
+	_, err := NewSchool(10, uuid.New().String(), "Fosters Home for Imaginary Friends")
+	if err != nil {
+		t.Error(err)
+	}
+	// if err != nil {
+	// 	t.Error(err)
+	// }
+}
