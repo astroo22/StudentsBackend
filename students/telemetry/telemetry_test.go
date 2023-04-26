@@ -24,7 +24,7 @@ func Test_Telemetry(t *testing.T) {
 	if !th.AssertEqual(t, "students len", len(studentList), studentNUM) {
 		t.Fatal("not enough students will create panic if continue")
 	}
-	err = FigureDerivedData()
+	//err = FigureDerivedData()
 	if err != nil {
 		t.Errorf("update of derived data failed")
 	}
@@ -82,20 +82,38 @@ func Test_AvgUpdates(t *testing.T) {
 	// if err != nil {
 	// 	t.Error(err)
 	// }
-	avgs, err := GetGradeAvgForSchool(schoolID)
+	// avgs, err := GetGradeAvgForSchool(schoolID)
+	// if err != nil {
+	// 	t.Error(err)
+	// }
+
+	school, err := students.GetSchool(schoolID)
 	if err != nil {
 		t.Error(err)
 	}
-	th.AssertEqual(t, "should be nil", avgs, nil)
-	err = FigureDerivedData()
+	classes, err := students.GetClasses(school.ClassList)
 	if err != nil {
 		t.Error(err)
 	}
-	avgs, err = GetGradeAvgForSchool(schoolID)
+	fmt.Printf("studentID: %s", classes[0].Roster[0])
+	fmt.Println()
+	rc, err := students.GetReportCard(classes[0].Roster[0])
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println(avgs)
+	fmt.Println("where am i?")
+	fmt.Println(rc)
+	fmt.Println(rc.English)
+	err = UpdateClassAvgs(classes)
+	if err != nil {
+		t.Error(err)
+	}
+	// avgs, err := GetGradeAvgForSchool(schoolID)
+	// if err != nil {
+	// 	t.Error(err)
+	// }
+	// fmt.Println(avgs)
+	t.Error(err)
 }
 
 func Test_TelemetryMassUpdates(t *testing.T) {

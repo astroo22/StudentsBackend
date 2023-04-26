@@ -3,11 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"students/students/telemetry"
-	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -64,21 +62,21 @@ func GetGradeAvgForSchoolHandler(w http.ResponseWriter, r *http.Request) {
 
 // TODO: I would like this to also update the scoreboard file whenever I create that.
 // update function for avgs
-func UpdateDerivedDataHandler(lastUpdate time.Time, interval time.Duration) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// time limit of
-		if time.Since(lastUpdate) < interval {
-			http.Error(w, "Updates too frequent", http.StatusTooManyRequests)
-			return
-		}
+// func UpdateDerivedDataHandler(lastUpdate time.Time, interval time.Duration) http.HandlerFunc {
+// 	return func(w http.ResponseWriter, r *http.Request) {
+// 		// time limit of
+// 		if time.Since(lastUpdate) < interval {
+// 			http.Error(w, "Updates too frequent", http.StatusTooManyRequests)
+// 			return
+// 		}
 
-		go func() {
-			err := telemetry.FigureDerivedData()
-			if err != nil {
-				log.Println("Error updating derived data:", err)
-			}
-		}()
-		lastUpdate = time.Now()
-		w.WriteHeader(http.StatusOK)
-	}
-}
+// 		go func() {
+// 			err := telemetry.FigureDerivedData()
+// 			if err != nil {
+// 				log.Println("Error updating derived data:", err)
+// 			}
+// 		}()
+// 		lastUpdate = time.Now()
+// 		w.WriteHeader(http.StatusOK)
+// 	}
+// }

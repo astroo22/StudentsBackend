@@ -78,21 +78,43 @@ func getReportCard(studentID string) (ReportCard, error) {
 	}
 	return reportCard, nil
 }
-func GetAllReportCards() ([]ReportCard, error) {
-	getStatement := `SELECT * FROM REPORTCARDS`
+func GetReportCards(studentIDs []string) ([]ReportCard, error) {
+	return getReportCards(studentIDs)
+}
+
+func getReportCards(studentIDs []string) ([]ReportCard, error) {
+	if len(studentIDs) == 0 {
+		return nil, fmt.Errorf("no data")
+	}
+	fmt.Printf("get StudentIDs: %v", studentIDs)
+	fmt.Println("")
+	placeholders := make([]string, 0, len(studentIDs))
+	batchVals := make([]interface{}, 0, len(studentIDs))
+	for i := 0; i < len(studentIDs); i++ {
+		placeholders = append(placeholders, fmt.Sprintf("$%d", i+1))
+		batchVals = append(batchVals, studentIDs[i])
+	}
+
+	getStatement := fmt.Sprintf(`SELECT * FROM ReportCards WHERE student_id IN (%s)`, strings.Join(placeholders, ","))
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Println(err)
 	}
 	defer db.Close()
-	ret, err := db.Query(getStatement)
+	fmt.Println(getStatement)
+	fmt.Println(batchVals...)
+	ret, err := db.Query(getStatement, batchVals...)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
+	fmt.Println(ret)
 	reportCards, err := ScanReportCards(ret)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
+	fmt.Println(reportCards)
 	return reportCards, nil
 }
 

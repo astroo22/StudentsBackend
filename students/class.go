@@ -74,17 +74,19 @@ func GetClasses(classIDs []string) ([]Class, error) {
 func getClasses(classIDs []string) ([]Class, error) {
 	placeholders := make([]string, 0, len(classIDs))
 	batchVals := make([]interface{}, 0, len(classIDs))
-	getStatement := fmt.Sprintf(`SELECT * FROM Classes WHERE class_id = %s`, strings.Join(placeholders, ","))
 	for i := 0; i < len(classIDs); i++ {
-		placeholders = append(placeholders, fmt.Sprintf("($%d)", i))
+		placeholders = append(placeholders, fmt.Sprintf("$%d", i+1))
 		batchVals = append(batchVals, classIDs[i])
 	}
+	getStatement := fmt.Sprintf(`SELECT * FROM Classes WHERE class_id IN (%s)`, strings.Join(placeholders, ","))
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Println(" err : ", err)
 	}
 	defer db.Close()
-	data, err := db.Query(getStatement, classIDs)
+	fmt.Println("class batch vals:")
+	fmt.Println(batchVals...)
+	data, err := db.Query(getStatement, batchVals...)
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +97,7 @@ func getClasses(classIDs []string) ([]Class, error) {
 	return classes, nil
 
 }
+
 func (opts UpdateClassOptions) UpdateClass() error {
 	return opts.updateClass()
 }
@@ -182,6 +185,10 @@ func ScanClasses(rows *sql.Rows) ([]Class, error) {
 			if err == nil {
 				class.ClassAvg = value.(float64)
 			}
+		}
+		temp := removeBrackets(strings.Split(string(roster), ","))
+		if len(temp) >= 0 {
+			class.Roster = temp
 		}
 		classes = append(classes, class)
 	}

@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"students/handlers"
-	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -13,8 +12,11 @@ import (
 func main() {
 
 	fmt.Println("HEREEE WE GOOOOOO")
-	lastUpdate := time.Now()
-	interval := 10 * time.Minute
+	// var(
+	// 	lastUpdate = time.Now()
+	// 	interval = 10 * time.Minute
+	// )
+
 	// Create the HTTP server and set the router
 	//router := http.NewServeMux()
 	router := mux.NewRouter()
@@ -54,9 +56,8 @@ func main() {
 	//create telemetry routes here
 	// yes yes routes they need but handlers they need first
 	// updates avgs. Will probably just be a db refresh function near the end
-	updateDerivedDataHandler := handlers.UpdateDerivedDataHandler(lastUpdate, interval)
-	router.HandleFunc("/telemetry", updateDerivedDataHandler)
-	//router.HandleFunc("/telemetry", handlers.UpdateDerivedData)
+	//updateDerivedDataHandler := handlers.UpdateDerivedDataHandler(lastUpdate, interval)
+	//router.HandleFunc("/telemetry", updateDerivedDataHandler)
 
 	// data generation handlers here going to include under telemetry
 	router.HandleFunc("/telemetry/{owner_id}", handlers.CreateNewSchoolHandler).Methods("POST")

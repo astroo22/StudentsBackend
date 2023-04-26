@@ -112,8 +112,14 @@ func BatchUploadTestData(studentList []students.Student, profs []students.Profes
 	if err != nil {
 		return err
 	}
-	// lastly update classlists of professors
+
+	// update classlists of professors
 	err = UpdateProfessorsClassList(classes)
+	if err != nil {
+		return err
+	}
+	// update class Avgs
+	err = UpdateClassAvgs(classes)
 	if err != nil {
 		return err
 	}
