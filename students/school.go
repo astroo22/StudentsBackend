@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math"
 	"strings"
 	"students/sqlgeneric"
 
@@ -57,10 +58,24 @@ func createSchool(name, ownerID string, professorList []string, classList []stri
 	if err != nil {
 		return School{}, err
 	}
+
+	// I feel like this is an extra db hit
+	schoolAvg, err := UpdateSchoolAvg(schoolID)
+	if err != nil {
+		return School{}, err
+	}
+	fmt.Println(schoolAvg)
+	// I dont yet know how performant this I may not want it here. I haven't used CTE. Tests needed
+	err = UpdateSchoolRankings()
+	if err != nil {
+		return School{}, err
+	}
+	// Then I need to get the ranking. WIll need to build ranking functions
 	ret := School{
 		SchoolID:      schoolID,
 		OwnerID:       ownerID,
 		SchoolName:    name,
+		AvgGPA:        schoolAvg,
 		ProfessorList: professorList,
 		ClassList:     classList,
 		StudentList:   studentList,
@@ -104,6 +119,61 @@ func getAllSchools() ([]School, error) {
 		return nil, err
 	}
 	return schools, err
+}
+
+// this function needs to have updated scans before it will work
+func UpdateSchoolAvg(schoolID string) (float64, error) {
+	var (
+		schoolAvg float64
+	)
+	classes, err := GetClassesForSchool(schoolID)
+	if err != nil {
+		return 0, err
+	}
+	for _, class := range classes {
+		schoolAvg += class.ClassAvg
+	}
+	schoolAvg = math.Round(schoolAvg/float64(len(classes))*100) / 100
+	fmt.Println(schoolAvg)
+	updateQuery := `UPDATE Schools SET avg_gpa = $1 WHERE school_id = $2`
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		log.Printf(" err : %v", err)
+	}
+	defer db.Close()
+	_, err = db.Exec(updateQuery, schoolAvg, schoolID)
+	if err != nil {
+		return 0, err
+	}
+	return schoolAvg, nil
+
+}
+
+func UpdateSchoolRankings() error {
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		log.Printf(" err : %v", err)
+	}
+	defer db.Close()
+
+	// Query to update school rankings
+	query := `WITH ranked_schools AS (
+			SELECT school_id, avg_gpa, DENSE_RANK() OVER (ORDER BY avg_gpa DESC) AS ranking
+			FROM Schools
+		)
+		UPDATE Schools
+		SET ranking = ranked_schools.ranking
+		FROM ranked_schools
+		WHERE Schools.school_id = ranked_schools.school_id
+	`
+
+	_, err = db.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("School rankings updated successfully")
+	return nil
 }
 
 func GetClassesForSchool(schoolID string) ([]Class, error) {
@@ -175,8 +245,6 @@ func (opts UpdateSchoolOptions) updateSchool() error {
 	if err != nil {
 		log.Println(" err : ", err)
 	}
-	fmt.Println(SQL)
-	fmt.Println(values...)
 	defer db.Close()
 	_, err = db.Exec(SQL, values...)
 	if err != nil {
@@ -293,6 +361,7 @@ func scanSchool(row *sql.Row) (School, error) {
 		professorList sql.NullString
 		classList     sql.NullString
 		StudentList   sql.NullString
+		schAvg        sql.NullFloat64
 	)
 	err := row.Scan(
 		&school.SchoolID,
@@ -301,9 +370,20 @@ func scanSchool(row *sql.Row) (School, error) {
 		&professorList,
 		&classList,
 		&StudentList,
+		&schAvg,
+		&school.Ranking,
 	)
 	if err != nil {
 		return School{}, err
+	}
+	if schAvg.Valid {
+		var value interface{}
+		value, err = schAvg.Value()
+		if err == nil {
+			school.AvgGPA = value.(float64)
+		} else {
+			fmt.Println(err)
+		}
 	}
 	if professorList.Valid {
 		school.ProfessorList = removeBrackets(strings.Split(professorList.String, ","))
@@ -328,6 +408,7 @@ func scanSchools(rows *sql.Rows) ([]School, error) {
 		professorList sql.NullString
 		classList     sql.NullString
 		StudentList   sql.NullString
+		schAvg        sql.NullFloat64
 	)
 	for rows.Next() {
 		school := School{}
@@ -338,9 +419,20 @@ func scanSchools(rows *sql.Rows) ([]School, error) {
 			&professorList,
 			&classList,
 			&StudentList,
+			&schAvg,
+			&school.Ranking,
 		)
 		if err != nil {
 			return nil, err
+		}
+		if schAvg.Valid {
+			var value interface{}
+			value, err = schAvg.Value()
+			if err == nil {
+				school.AvgGPA = value.(float64)
+			} else {
+				fmt.Println(err)
+			}
 		}
 		if professorList.Valid {
 			school.ProfessorList = removeBrackets(strings.Split(professorList.String, ","))

@@ -53,17 +53,11 @@ func main() {
 	router.HandleFunc("/schools/{school_id}", handlers.DeleteSchoolHandler).Methods("DELETE")
 	router.HandleFunc("/schools/{school_id}/classes", handlers.GetClassesForSchoolHandler).Methods("GET")
 
-	//create telemetry routes here
-	// yes yes routes they need but handlers they need first
-	// updates avgs. Will probably just be a db refresh function near the end
-	//updateDerivedDataHandler := handlers.UpdateDerivedDataHandler(lastUpdate, interval)
-	//router.HandleFunc("/telemetry", updateDerivedDataHandler)
-
-	// data generation handlers here going to include under telemetry
+	// data generation handlers included under telemetry
 	router.HandleFunc("/telemetry/{owner_id}", handlers.CreateNewSchoolHandler).Methods("POST")
 
-	// These are going to be my telemetry handlers
-	// gets all grade avg for a school
+	// telemetry
+	router.HandleFunc("/telemetry/best-professors", handlers.GetBestProfessorsHandler).Methods("GET")
 	router.HandleFunc("/telemetry/{school_id}/classes/avg_gpa", handlers.GetGradeAvgForSchoolHandler).Methods("GET")
 
 	// Start the HTTP server on port 3000

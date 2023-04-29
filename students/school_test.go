@@ -89,7 +89,7 @@ func Test_SchoolCrud(t *testing.T) {
 	}
 	//classlist
 	classList = append(classList, class1.ClassID, class2.ClassID, class4.ClassID, class5.ClassID)
-	school, err := CreateSchool("PLUS ULTRA ACADEMY", ownerID, profList, classList, roster)
+	school, err := CreateSchool("PLUS ULTRA ACADEMY test1", ownerID, profList, classList, roster)
 	if err != nil {
 		t.Error(err)
 	}
@@ -183,6 +183,14 @@ func Test_SchoolCrud(t *testing.T) {
 		if th.AssertEqual(t, "roster len", len(schoolGet.StudentList), 4) {
 			th.AssertEqual(t, "roster", schoolGet.StudentList, roster)
 		}
+	}
+	err = DeleteSchool(school.SchoolID)
+	if err != nil {
+		t.Error(err)
+	}
+	schoolGet, err = GetSchool(school.SchoolID)
+	if err == nil {
+		t.Error("get failed after delete")
 	}
 
 }

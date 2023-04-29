@@ -98,7 +98,6 @@ func (opts UpdateProfessorOptions) updateProfessor() error {
 	if err != nil {
 		log.Println(" err : ", err)
 	}
-	fmt.Println(SQL)
 	defer db.Close()
 	_, err = db.Exec(SQL, values...)
 	if err != nil {
@@ -173,4 +172,44 @@ func scanProf(row *sql.Row) (Professor, error) {
 		prof.ClassList = strings.Split(classList.String, ",")
 	}
 	return prof, nil
+}
+func ScanProfessors(rows *sql.Rows) ([]Professor, error) {
+	var professors []Professor
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			prof      = Professor{}
+			stdAvg    sql.NullFloat64
+			classList sql.NullString
+		)
+		err := rows.Scan(
+			&prof.ProfessorID,
+			&prof.Name,
+			&stdAvg,
+			&classList,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if stdAvg.Valid {
+			var value interface{}
+			value, err = stdAvg.Value()
+			if err == nil {
+				prof.StudentAvg = value.(float64)
+			} else {
+				fmt.Println(err)
+			}
+		}
+		if classList.Valid {
+			prof.ClassList = strings.Split(classList.String, ",")
+		}
+		professors = append(professors, prof)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return professors, nil
 }

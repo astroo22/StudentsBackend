@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"strings"
 	"students/client"
 	"students/sqlgeneric"
 	"students/students"
@@ -58,32 +59,47 @@ func GetGradeAvgForSchool(schoolID string) ([]client.GradeAvg_API, error) {
 			var value interface{}
 			value, err = grdAvg.Value()
 			if err == nil {
-				gradeAvg.AvgGPA = value.(float64)
+				//classAvg = math.Round(classAvg*100) / 100
+				gradeAvg.AvgGPA = math.Round(value.(float64)*100) / 100
 			} else {
 				fmt.Println(err)
 			}
 		}
-		fmt.Printf("GradeAvg: %v", gradeAvg.AvgGPA)
-		fmt.Println("")
 		gradeAvgs = append(gradeAvgs, gradeAvg)
 	}
 
 	return gradeAvgs, nil
 }
+func GetBestProfessors(professorIDs []string) ([]client.Professor_API, error) {
+	return getBestProfessors(professorIDs)
+}
+func getBestProfessors(professorIDs []string) ([]client.Professor_API, error) {
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
 
-// FigureDerivedDate: WIll run a db update on avg's should be used after a generation
-// will probably tie to a handler to get updates whenever
-// func FigureDerivedData() error {
-// 	// err := UpdateClassAvgs()
-// 	// if err != nil {
-// 	// 	return err
-// 	// }
-// 	err := UpdateAllProfessorStudentAvgs()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
+	placeholders := make([]string, 0, len(professorIDs))
+	batchVals := make([]interface{}, 0, len(professorIDs))
+	for i := 0; i < len(professorIDs); i++ {
+		placeholders = append(placeholders, fmt.Sprintf("$%d", i+1))
+		batchVals = append(batchVals, professorIDs[i])
+	}
+
+	getStatement := fmt.Sprintf(`SELECT * FROM Professors WHERE professor_id IN (%s) ORDER BY student_avg DESC`, strings.Join(placeholders, ","))
+	rows, err := db.Query(getStatement, batchVals...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	bestProfessors, err := students.ScanProfessors(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.ProfessorsToAPI(bestProfessors), nil
+}
 
 // UpdateProfessorStudentAvg: updates specific professors student avg
 func UpdateProfessorStudentAvg(profID string) (float64, error) {
@@ -122,22 +138,26 @@ func updateProfessorsStudentAvgs(professors []string) error {
 		return err
 	}
 	defer db.Close()
-
+	result := make([]string, len(professors))
+	for i, val := range professors {
+		result[i] = strings.ReplaceAll(val, ",", " ")
+	}
+	fmt.Println(len(result))
 	query := `UPDATE Professors SET student_avg = (
-        SELECT COALESCE(AVG(class_avg),0) 
+        SELECT COALESCE(AVG(class_avg),0)
         FROM Classes 
-        WHERE class_id = ANY(SELECT UNNEST(class_list) FROM Professors WHERE professor_id=Professors.professor_id)
+        WHERE class_id =ANY(Professors.class_list) 
     )
 	WHERE professor_id = ANY($1)`
 
-	_, err = db.Exec(query, professors)
+	_, err = db.Exec(query, pq.Array(result))
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// This is more performant and useful now but I can probably find a way to batch update the class updates later
+// This is more performant and useful now but I can probably find a way to batch update the class updates at the end later
 // Updates all class avgs in the table
 func UpdateClassAvgs(classList []students.Class) error {
 	return updateClassAvgs(classList)
@@ -151,37 +171,21 @@ func updateClassAvgs(classList []students.Class) error {
 	defer db.Close()
 	fmt.Println(classList[0].Roster)
 	for _, class := range classList {
-		//fmt.Printf("class",class.)
-		// Get the report card grades for each student in the class
-		// query := `SELECT math, science, english, physical_ed, lunch FROM ReportCards WHERE student_id = ANY($1)`
-		// rows, err := db.Query(query, pq.Array(class.Roster))
-		// if err != nil {
-		// 	return err
-		// }
 		var (
 			reportCards []students.ReportCard
 		)
-		for _, studentID := range class.Roster {
-			rc, err := students.GetReportCard(studentID)
-			if err != nil {
-				return err
-			}
-			reportCards = append(reportCards, rc)
+		reportCards, err := students.GetReportCards(class.Roster)
+		if err != nil {
+			return err
 		}
 
-		// reportCards, err := students.GetReportCards(class.Roster)
-		// if err != nil {
-		// 	return err
-		// }
-		fmt.Println(reportCards)
 		if len(reportCards) == 0 {
 			return fmt.Errorf("no report cards found")
 		}
 		// Calculate the class average
 		var totalGrade, numStudents int
 		for _, reportCard := range reportCards {
-			//var math, science, english, physicalEd, lunch float64
-			//err = rows.Scan(&math, &science, &english, &physicalEd, &lunch)
+			// math, science, english, physicalEd, lunch
 			switch class.Subject {
 			case "math":
 				totalGrade += int(reportCard.Math * 100)
@@ -199,11 +203,8 @@ func updateClassAvgs(classList []students.Class) error {
 
 			numStudents++
 		}
-		fmt.Println(totalGrade)
-		fmt.Println(numStudents)
-		classAvg := math.Round(float64(totalGrade) / float64(numStudents) / 100.0)
-
-		fmt.Println(classAvg)
+		classAvg := math.Round(float64(totalGrade)/float64(numStudents)) / 100.0
+		//classAvg = math.Round(classAvg*100) / 100
 		// Update the class record with the calculated class average
 		query := `UPDATE Classes SET class_avg = $1 WHERE class_id = $2`
 		_, err = db.Exec(query, classAvg, class.ClassID)
@@ -246,6 +247,20 @@ func updateProfessorsClassList(classList []students.Class) error {
 		}
 	}
 
+	return nil
+}
+func UpdateAllSchoolAvgGpa() error {
+	schools, err := students.GetAllSchools()
+	if err != nil {
+		return err
+	}
+	for _, school := range schools {
+		avg, err := students.UpdateSchoolAvg(school.SchoolID)
+		if err != nil {
+			return err
+		}
+		fmt.Println(avg)
+	}
 	return nil
 }
 

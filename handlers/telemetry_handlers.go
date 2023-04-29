@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
+	"students/students"
 	"students/students/telemetry"
 
 	"github.com/gorilla/mux"
@@ -43,15 +45,97 @@ func GetGradeAvgForSchoolHandler(w http.ResponseWriter, r *http.Request) {
 	// Get the schoolID from the URL parameter
 	vars := mux.Vars(r)
 	schoolID := vars["school_id"]
-
-	// Call the GetGradeAvgForSchool function to retrieve the data
+	if len(schoolID) == 0 {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "no given id")
+		return
+	}
+	fmt.Println("REMINDER YOU NEED TO FIX ALL THE DATA IN THE DB FOR THIS TO WORK SO THAT IT UPDATES ON CREATE IN FUTURE")
+	// check if exist
+	_, err := students.GetSchool(schoolID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "no school with that id")
+		return
+	}
+	// attempt update  TODO: fix this function to auto check if the values are 0.0 and run a class avg update if so
 	gradeAvgList, err := telemetry.GetGradeAvgForSchool(schoolID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Error getting grade averages: %v", err)
 		return
 	}
+	// means update
+	if gradeAvgList[0].AvgGPA == 0.0 {
+		classList, err := students.GetClassesForSchool(schoolID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "error on class get")
+			return
+		}
+		err = telemetry.UpdateClassAvgs(classList)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "error on class avg update")
+			return
+		}
+		gradeAvgList, err = telemetry.GetGradeAvgForSchool(schoolID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, "Error getting grade averages: %v", err)
+			return
+		}
+	}
 	ret, err := json.Marshal(gradeAvgList)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "Unexpected error mashalling professor")
+		return
+	}
+	w.Write(ret)
+}
+
+func GetBestProfessorsHandler(w http.ResponseWriter, r *http.Request) {
+	professorIDs := r.URL.Query().Get("professor_ids")
+	if len(professorIDs) == 0 {
+		http.Error(w, "Missing professor_ids query parameter", http.StatusBadRequest)
+		return
+	}
+	professorList := strings.Split(professorIDs, ",")
+	fmt.Println("attempting getBestProf")
+	// professors := r.PostFormValue("professor_ids")
+
+	// fmt.Printf("retriving best professors m1: %v", professorIDs)
+	fmt.Println("")
+	if len(professorList) == 0 {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "Unexpected error  professorList")
+		return
+	}
+	bestProfessors, err := telemetry.GetBestProfessors(professorList)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		fmt.Printf("logging error at professorget %v", err)
+		return
+	}
+	fmt.Println(len(bestProfessors))
+	if bestProfessors[0].StudentAvg == 0 {
+		fmt.Println("Found values needed update for professors")
+		err = telemetry.UpdateProfessorsStudentAvgs(professorList)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "Unexpected error during value updates")
+			fmt.Printf("logging error at professorupdate %v", err)
+			return
+		}
+		bestProfessors, err = telemetry.GetBestProfessors(professorList)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		fmt.Println(len(bestProfessors))
+	}
+	ret, err := json.Marshal(bestProfessors)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling professor")

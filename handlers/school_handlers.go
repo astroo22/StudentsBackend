@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"students/client"
 	"students/students"
 
 	"github.com/gorilla/mux"
@@ -12,6 +13,7 @@ import (
 
 //decided no create school handler
 
+// GetAllSchools
 func GetAllSchools(w http.ResponseWriter, r *http.Request) {
 	schools, err := students.GetAllSchools()
 	if err != nil {
@@ -19,7 +21,7 @@ func GetAllSchools(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Internal server error")
 		return
 	}
-	ret, err := json.Marshal(schools)
+	ret, err := json.Marshal(client.SchoolsToAPI(schools))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling school")
@@ -28,6 +30,7 @@ func GetAllSchools(w http.ResponseWriter, r *http.Request) {
 	w.Write(ret)
 }
 
+// GetClassesForSchoolHandler
 func GetClassesForSchoolHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	schoolID := vars["school_id"]
@@ -38,8 +41,8 @@ func GetClassesForSchoolHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Unexpected error retrieving classes")
 		return
 	}
-
-	ret, err := json.Marshal(classes)
+	client.ClassesToAPI(classes)
+	ret, err := json.Marshal(client.ClassesToAPI(classes))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling classes")
@@ -63,7 +66,7 @@ func GetSchoolHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "school not found")
 		return
 	}
-	ret, err := json.Marshal(school)
+	ret, err := json.Marshal(client.SchoolToAPI(school))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling school")

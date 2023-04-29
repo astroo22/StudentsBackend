@@ -73,13 +73,6 @@ func BatchUploadTestData(studentList []students.Student, profs []students.Profes
 	if err != nil {
 		return err
 	}
-	// var (
-	// 	roster    []string
-	// 	proflist  []string
-	// 	classlist []string
-	// 	school students.School
-	// )
-
 	// set avg gpas also grab studentids
 	for i, student := range studentList {
 		//roster = append(roster, student.StudentID)
@@ -90,12 +83,6 @@ func BatchUploadTestData(studentList []students.Student, profs []students.Profes
 			}
 		}
 	}
-	// for _, prof := range profs {
-	// 	proflist = append(proflist, prof.ProfessorID)
-	// }
-	// for _, class := range classes {
-	// 	classlist = append(classlist, class.ClassID)
-	// }
 
 	// upload as batch
 	err = CreateNewStudents(studentList)
@@ -325,8 +312,6 @@ func createProfessors(profs []students.Professor) error {
 		return err
 	}
 	defer db.Close()
-	fmt.Println(insertStatement)
-	fmt.Println(values...)
 
 	_, err = db.Exec(insertStatement, values...)
 	if err != nil {
