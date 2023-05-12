@@ -67,7 +67,15 @@ type GradeAvg_API struct {
 	AvgGPA float64 `json:"avg_gpa"`
 }
 
-// TODO: convert some of the handlers to use the API
+type User_API struct {
+	OwnerID        string   `json:"owner_id"`
+	UserName       string   `json:"user_name"`
+	Email          string   `json:"email,omitempty"`
+	HashedPassword string   `json:"hashed_password"`
+	SchoolList     []string `json:"school_list,omitempty"`
+}
+
+// TODO: convert the remaining handlers to use the API
 // converters
 // Student to api
 func StudentToAPI(stu students.Student) Student_API {

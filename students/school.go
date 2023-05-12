@@ -121,6 +121,28 @@ func getAllSchools() ([]School, error) {
 	return schools, err
 }
 
+// this is currently untested
+func GetAllSchoolsForUser(ownerID string) ([]School, error) {
+	return getAllSchoolsForUser(ownerID)
+}
+func getAllSchoolsForUser(ownerID string) ([]School, error) {
+	getStatement := `SELECT * FROM Schools WHERE owner_id = $1`
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		log.Printf(" err : %v", err)
+	}
+	defer db.Close()
+	ret, err := db.Query(getStatement)
+	if err != nil {
+		return nil, err
+	}
+	schools, err := ScanSchools(ret)
+	if err != nil {
+		return nil, err
+	}
+	return schools, err
+}
+
 // this function needs to have updated scans before it will work
 func UpdateSchoolAvg(schoolID string) (float64, error) {
 	var (
@@ -429,7 +451,8 @@ func scanSchools(rows *sql.Rows) ([]School, error) {
 			var value interface{}
 			value, err = schAvg.Value()
 			if err == nil {
-				school.AvgGPA = value.(float64)
+				school.AvgGPA = math.Round(value.(float64)*100) / 100
+
 			} else {
 				fmt.Println(err)
 			}

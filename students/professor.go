@@ -50,6 +50,9 @@ func createProfessor(name string) (Professor, error) {
 	return prof, nil
 }
 func GetProfessor(professorID string) (Professor, error) {
+	return getProfessor(professorID)
+}
+func getProfessor(professorID string) (Professor, error) {
 	getStatement := `SELECT * FROM Professors WHERE professor_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {

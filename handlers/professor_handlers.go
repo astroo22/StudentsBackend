@@ -112,13 +112,6 @@ func UpdateProfessorHandler(w http.ResponseWriter, r *http.Request) {
 func DeleteProfessorHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	ID := vars["professor_id"]
-	// test of uuidparse
-	// profID, err := uuid.Parse(ID)
-	// if err != nil {
-	// 	w.WriteHeader(http.StatusInternalServerError)
-	// 	fmt.Fprint(w, "incorrect ID format")
-	// 	return
-	// }
 	err := students.DeleteProfessor(ID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

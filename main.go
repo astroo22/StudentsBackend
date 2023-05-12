@@ -60,6 +60,9 @@ func main() {
 	router.HandleFunc("/telemetry/best-professors", handlers.GetBestProfessorsHandler).Methods("GET")
 	router.HandleFunc("/telemetry/{school_id}/classes/avg_gpa", handlers.GetGradeAvgForSchoolHandler).Methods("GET")
 
+	// AUTH
+	router.HandleFunc("/login", handlers.LoginHandler).Methods("POST")
+	router.HandleFunc("/logout", handlers.LogoutHandler).Methods("POST")
 	// Start the HTTP server on port 3000
 	log.Printf("Starting server on port 3000")
 	if err := http.ListenAndServe(":3000", addCorsHeaders(router)); err != nil {
