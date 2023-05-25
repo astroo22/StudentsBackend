@@ -17,6 +17,12 @@ func main() {
 	// 	interval = 10 * time.Minute
 	// )
 
+	// DATA GENERATION
+	// err := telemetry.AdminGenerateTestSchools()
+	// if err != nil {
+	// 	fmt.Println("data generation failed in main")
+	// }
+
 	// Create the HTTP server and set the router
 	//router := http.NewServeMux()
 	router := mux.NewRouter()
@@ -48,10 +54,12 @@ func main() {
 
 	// Set up routes for the school
 	router.HandleFunc("/schools", handlers.GetAllSchools).Methods("GET")
-	router.HandleFunc("/schools/{school_id}", handlers.GetSchoolHandler).Methods("GET")
-	router.HandleFunc("/schools/{school_id}", handlers.UpdateSchoolHandler).Methods("PUT")
-	router.HandleFunc("/schools/{school_id}", handlers.DeleteSchoolHandler).Methods("DELETE")
-	router.HandleFunc("/schools/{school_id}/classes", handlers.GetClassesForSchoolHandler).Methods("GET")
+	router.HandleFunc("/schools/{owner_id}", handlers.GetAllSchoolsForUser).Methods("GET")
+	router.HandleFunc("/schools/school/{school_id}", handlers.GetSchoolHandler).Methods("GET")
+	router.HandleFunc("/schools/school/{school_id}", handlers.UpdateSchoolHandler).Methods("PUT")
+	router.HandleFunc("/schools/school/{school_id}", handlers.DeleteSchoolHandler).Methods("DELETE")
+	router.HandleFunc("/schools/school/{school_id}/students", handlers.GetStudentsForSchoolHandler).Methods("GET")
+	router.HandleFunc("/schools/school/{school_id}/classes", handlers.GetClassesForSchoolHandler).Methods("GET")
 
 	// data generation handlers included under telemetry
 	router.HandleFunc("/telemetry/{owner_id}", handlers.CreateNewSchoolHandler).Methods("POST")

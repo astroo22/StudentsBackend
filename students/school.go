@@ -64,7 +64,7 @@ func createSchool(name, ownerID string, professorList []string, classList []stri
 	if err != nil {
 		return School{}, err
 	}
-	fmt.Println(schoolAvg)
+
 	// I dont yet know how performant this I may not want it here. I haven't used CTE. Tests needed
 	err = UpdateSchoolRankings()
 	if err != nil {
@@ -132,7 +132,7 @@ func getAllSchoolsForUser(ownerID string) ([]School, error) {
 		log.Printf(" err : %v", err)
 	}
 	defer db.Close()
-	ret, err := db.Query(getStatement)
+	ret, err := db.Query(getStatement, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -221,6 +221,30 @@ func getClassesForSchool(schoolID string) ([]Class, error) {
 		return nil, err
 	}
 	return classes, nil
+}
+func GetStudentsForSchool(schoolID string) ([]Student, error) {
+	return getStudentsForSchool(schoolID)
+}
+func getStudentsForSchool(schoolID string) ([]Student, error) {
+	query := `
+		SELECT st.*
+		FROM schools s, unnest(s.student_list) sl, students st
+		WHERE s.school_id = $1 and sl = st.student_id
+		ORDER BY st.avg_gpa DESC
+	`
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		log.Printf(" err : %v", err)
+	}
+	rows, err := db.Query(query, schoolID)
+	if err != nil {
+		return nil, err
+	}
+	students, err := ScanStudents(rows)
+	if err != nil {
+		return nil, err
+	}
+	return students, nil
 }
 
 // UPDATE
@@ -389,11 +413,11 @@ func scanSchool(row *sql.Row) (School, error) {
 		&school.SchoolID,
 		&school.OwnerID,
 		&school.SchoolName,
+		&schAvg,
+		&school.Ranking,
 		&professorList,
 		&classList,
 		&StudentList,
-		&schAvg,
-		&school.Ranking,
 	)
 	if err != nil {
 		return School{}, err
@@ -438,11 +462,11 @@ func scanSchools(rows *sql.Rows) ([]School, error) {
 			&school.SchoolID,
 			&school.OwnerID,
 			&school.SchoolName,
+			&schAvg,
+			&school.Ranking,
 			&professorList,
 			&classList,
 			&StudentList,
-			&schAvg,
-			&school.Ranking,
 		)
 		if err != nil {
 			return nil, err

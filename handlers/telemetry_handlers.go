@@ -50,7 +50,6 @@ func GetGradeAvgForSchoolHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "no given id")
 		return
 	}
-	fmt.Println("REMINDER YOU NEED TO FIX ALL THE DATA IN THE DB FOR THIS TO WORK SO THAT IT UPDATES ON CREATE IN FUTURE")
 	// check if exist
 	_, err := students.GetSchool(schoolID)
 	if err != nil {
@@ -102,11 +101,6 @@ func GetBestProfessorsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	professorList := strings.Split(professorIDs, ",")
-	fmt.Println("attempting getBestProf")
-	// professors := r.PostFormValue("professor_ids")
-
-	// fmt.Printf("retriving best professors m1: %v", professorIDs)
-	fmt.Println("")
 	if len(professorList) == 0 {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error  professorList")
@@ -118,9 +112,8 @@ func GetBestProfessorsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("logging error at professorget %v", err)
 		return
 	}
-	fmt.Println(len(bestProfessors))
 	if bestProfessors[0].StudentAvg == 0 {
-		fmt.Println("Found values needed update for professors")
+		fmt.Println("Found values needing update for professors. Running updates!")
 		err = telemetry.UpdateProfessorsStudentAvgs(professorList)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -133,7 +126,6 @@ func GetBestProfessorsHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		fmt.Println(len(bestProfessors))
 	}
 	ret, err := json.Marshal(bestProfessors)
 	if err != nil {
@@ -143,24 +135,3 @@ func GetBestProfessorsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write(ret)
 }
-
-// TODO: I would like this to also update the scoreboard file whenever I create that.
-// update function for avgs
-// func UpdateDerivedDataHandler(lastUpdate time.Time, interval time.Duration) http.HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		// time limit of
-// 		if time.Since(lastUpdate) < interval {
-// 			http.Error(w, "Updates too frequent", http.StatusTooManyRequests)
-// 			return
-// 		}
-
-// 		go func() {
-// 			err := telemetry.FigureDerivedData()
-// 			if err != nil {
-// 				log.Println("Error updating derived data:", err)
-// 			}
-// 		}()
-// 		lastUpdate = time.Now()
-// 		w.WriteHeader(http.StatusOK)
-// 	}
-// }

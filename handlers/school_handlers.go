@@ -15,12 +15,15 @@ import (
 
 // GetAllSchools
 func GetAllSchools(w http.ResponseWriter, r *http.Request) {
+
 	schools, err := students.GetAllSchools()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Println(err)
 		fmt.Fprint(w, "Internal server error")
 		return
 	}
+	fmt.Println("GetALLSchools: all schools returned")
 	ret, err := json.Marshal(client.SchoolsToAPI(schools))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -41,11 +44,29 @@ func GetClassesForSchoolHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Unexpected error retrieving classes")
 		return
 	}
-	client.ClassesToAPI(classes)
 	ret, err := json.Marshal(client.ClassesToAPI(classes))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling classes")
+		return
+	}
+	w.Write(ret)
+}
+func GetStudentsForSchoolHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	schoolID := vars["school_id"]
+
+	students, err := students.GetStudentsForSchool(schoolID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Println(err)
+		fmt.Fprint(w, "Unexpected error retrieving classes")
+		return
+	}
+	ret, err := json.Marshal(client.StudentsToAPI(students))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "Unexpected error mashalling students")
 		return
 	}
 	w.Write(ret)
@@ -67,6 +88,32 @@ func GetSchoolHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ret, err := json.Marshal(client.SchoolToAPI(school))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "Unexpected error mashalling school")
+		return
+	}
+	w.Write(ret)
+}
+
+// GetSchoolForUserHandler
+func GetAllSchoolsForUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	ownerID := vars["owner_id"]
+	if len(ownerID) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, "Invalid request payload")
+		return
+	}
+	schools, err := students.GetAllSchoolsForUser(ownerID)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Printf("GetAllSchoolsForUser: %v", err)
+		fmt.Println()
+		fmt.Fprint(w, "ownerid not found")
+		return
+	}
+	ret, err := json.Marshal(client.SchoolsToAPI(schools))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling school")

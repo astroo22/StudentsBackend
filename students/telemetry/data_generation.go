@@ -68,6 +68,38 @@ func newSchool(studentsPerGrade int, ownerID, schoolName string) (students.Schoo
 	}
 	return school, nil
 }
+func AdminGenerateTestSchools() error {
+	var (
+		owernerID   = "The New Vibe"
+		schoolName1 = "Busta Rhymes Academy"
+		schoolName2 = "Rick and Morty Vindicators 4"
+		schoolName3 = "PLUS ULTRA ACADEMY"
+		schoolName4 = "Xavier Institue for Higher Learning"
+		schoolName5 = "Institue for UnderWater Basket Weaving"
+		stdPerGrade = 20
+	)
+	_, err := NewSchool(stdPerGrade, owernerID, schoolName1)
+	if err != nil {
+		return err
+	}
+	_, err = NewSchool(stdPerGrade, owernerID, schoolName2)
+	if err != nil {
+		return err
+	}
+	_, err = NewSchool(stdPerGrade, owernerID, schoolName3)
+	if err != nil {
+		return err
+	}
+	_, err = NewSchool(stdPerGrade, owernerID, schoolName4)
+	if err != nil {
+		return err
+	}
+	_, err = NewSchool(stdPerGrade, owernerID, schoolName5)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func BatchUploadTestData(studentList []students.Student, profs []students.Professor, classes []students.Class, reportCards []students.ReportCard, err error) error {
 	if err != nil {
@@ -222,7 +254,6 @@ func generateReportCards(studentList []students.Student, classList []students.Cl
 	var (
 		reportCards []students.ReportCard
 	)
-	fmt.Println(len(studentList))
 	classIDs := []string{}
 	for _, class := range classList {
 		classIDs = append(classIDs, class.ClassID)

@@ -108,7 +108,7 @@ func UpdateClassHandler(w http.ResponseWriter, r *http.Request) {
 	addRoster := r.PostFormValue("add_roster")
 	if addRoster != "" {
 		addRosterList := strings.Split(addRoster, ",")
-		fmt.Println(len(addRosterList))
+		//fmt.Println(len(addRosterList))
 		opts.AddRoster = addRosterList
 	}
 

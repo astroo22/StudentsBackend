@@ -77,7 +77,7 @@ func UpdateProfessorHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "invalid value")
 	} else if studentAvg > 0.0 && studentAvg <= 4.00 {
-		fmt.Println(studentAvg)
+		//fmt.Println(studentAvg)
 		opts.StudentAvg = studentAvg
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
@@ -87,7 +87,7 @@ func UpdateProfessorHandler(w http.ResponseWriter, r *http.Request) {
 	if addClasses != "" {
 		addClassList := strings.Split(addClasses, ",")
 		if len(addClassList) > 0 {
-			fmt.Println(addClassList)
+			//fmt.Println(addClassList)
 			opts.AddClassList = addClassList
 		}
 	}

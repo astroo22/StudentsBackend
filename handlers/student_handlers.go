@@ -106,7 +106,7 @@ func GetAllStudentsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Unexpected error mashalling class")
 		return
 	}
-	fmt.Println("test log: return off all students")
+
 	w.Write(ret)
 }
 func UpdateStudentHandler(w http.ResponseWriter, r *http.Request) {
@@ -128,7 +128,7 @@ func UpdateStudentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	currentYear, err := strconv.Atoi(r.FormValue("current_year"))
 	if err != nil {
-		fmt.Println(w, "Invalid current year")
+		fmt.Fprint(w, "Invalid current year")
 	}
 	if currentYear > 0 && currentYear < 13 {
 		opts.CurrentYear = currentYear
@@ -159,7 +159,6 @@ func UpdateStudentHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Invalid request payload")
 	}
 	opts.Enrolled = enrolled
-	fmt.Println(opts)
 	err = opts.UpdateStudent()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
