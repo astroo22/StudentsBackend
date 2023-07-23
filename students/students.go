@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type Student struct {
@@ -84,7 +85,11 @@ func getStudent(studentID string) (Student, error) {
 	return ret, nil
 }
 func GetAllStudents() ([]Student, error) {
-	getStatement := `SELECT * FROM STUDENTS WHERE Enrolled IS TRUE`
+	return getAllStudents()
+}
+
+func getAllStudents() ([]Student, error) {
+	getStatement := `SELECT * FROM STUDENTS`
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Println(err)
@@ -146,6 +151,34 @@ func (opts UpdateStudentOptions) updateStudent() error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+func FlipEnrollmentStatus(studentIDs []string) error {
+	return flipEnrollmentStatus(studentIDs)
+}
+
+func flipEnrollmentStatus(studentIDs []string) error {
+	updateStatement := `UPDATE STUDENTS SET "enrolled" = NOT "enrolled" WHERE "student_id" = ANY($1)`
+	fmt.Println(studentIDs)
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		log.Println(" err : ", err)
+		return err
+	}
+
+	defer db.Close()
+
+	// Prepare the statement since might be hit often.
+	// stmt, err := db.Prepare(updateStatement)
+	// if err != nil {
+	// 	return err
+	// }
+
+	_, err = db.Exec(updateStatement, pq.Array(studentIDs))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

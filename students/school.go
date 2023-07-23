@@ -23,12 +23,13 @@ type School struct {
 	StudentList   []string
 }
 
+// will update other values as functionality is added
 type UpdateSchoolOptions struct {
 	// will not update
 	SchoolID string
 
 	// will update
-	SchoolName string
+	SchoolName string `json:"name"`
 
 	AddToProfessorList      []string
 	RemoveFromProfessorList []string
@@ -38,6 +39,9 @@ type UpdateSchoolOptions struct {
 
 	AddToStudentList      []string
 	RemoveFromStudentList []string
+
+	// enrollment
+	Enrollment_change_ids []string `json:"enrollment_change_ids"`
 }
 
 func CreateSchool(name, ownerID string, professorList []string, classList []string, studentList []string) (School, error) {
@@ -59,13 +63,12 @@ func createSchool(name, ownerID string, professorList []string, classList []stri
 		return School{}, err
 	}
 
-	// I feel like this is an extra db hit
 	schoolAvg, err := UpdateSchoolAvg(schoolID)
 	if err != nil {
 		return School{}, err
 	}
 
-	// I dont yet know how performant this I may not want it here. I haven't used CTE. Tests needed
+	// I dont yet know how performant this I may not want it here.
 	err = UpdateSchoolRankings()
 	if err != nil {
 		return School{}, err
@@ -87,7 +90,7 @@ func GetSchool(schoolID string) (School, error) {
 	return getSchool(schoolID)
 }
 func getSchool(schoolID string) (School, error) {
-	getStatement := `SELECT * FROM Schools WHERE school_id = $1`
+	getStatement := `SELECT school_id, school_name, avg_gpa, ranking, professor_list, class_list, student_list FROM Schools WHERE school_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Printf(" err : %v", err)
@@ -104,7 +107,7 @@ func GetAllSchools() ([]School, error) {
 	return getAllSchools()
 }
 func getAllSchools() ([]School, error) {
-	getStatement := `SELECT * FROM Schools`
+	getStatement := `SELECT school_id, school_name, avg_gpa, ranking, professor_list,class_list,student_list FROM Schools`
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Printf(" err : %v", err)
@@ -126,7 +129,7 @@ func GetAllSchoolsForUser(ownerID string) ([]School, error) {
 	return getAllSchoolsForUser(ownerID)
 }
 func getAllSchoolsForUser(ownerID string) ([]School, error) {
-	getStatement := `SELECT * FROM Schools WHERE owner_id = $1`
+	getStatement := `SELECT school_id, school_name, avg_gpa, ranking, professor_list,class_list,student_list FROM Schools WHERE owner_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Printf(" err : %v", err)
@@ -144,32 +147,33 @@ func getAllSchoolsForUser(ownerID string) ([]School, error) {
 }
 
 // this function needs to have updated scans before it will work
-func UpdateSchoolAvg(schoolID string) (float64, error) {
-	var (
-		schoolAvg float64
-	)
-	classes, err := GetClassesForSchool(schoolID)
-	if err != nil {
-		return 0, err
-	}
-	for _, class := range classes {
-		schoolAvg += class.ClassAvg
-	}
-	schoolAvg = math.Round(schoolAvg/float64(len(classes))*100) / 100
-	fmt.Println(schoolAvg)
-	updateQuery := `UPDATE Schools SET avg_gpa = $1 WHERE school_id = $2`
-	db, err := sqlgeneric.Init()
-	if err != nil {
-		log.Printf(" err : %v", err)
-	}
-	defer db.Close()
-	_, err = db.Exec(updateQuery, schoolAvg, schoolID)
-	if err != nil {
-		return 0, err
-	}
-	return schoolAvg, nil
+// func UpdateSchoolAvg(schoolID string) (float64, error) {
+// 	var (
+// 		schoolAvg float64
+// 	)
+// 	classes, err := GetClassesForSchool(schoolID)
+// 	if err != nil {
+// 		return 0, err
+// 	}
 
-}
+// 	for _, class := range classes {
+// 		schoolAvg += class.ClassAvg
+// 	}
+// 	schoolAvg = math.Round(schoolAvg/float64(len(classes))*100) / 100
+// 	fmt.Println(schoolAvg)
+// 	updateQuery := `UPDATE Schools SET avg_gpa = $1 WHERE school_id = $2`
+// 	db, err := sqlgeneric.Init()
+// 	if err != nil {
+// 		log.Printf(" err : %v", err)
+// 	}
+// 	defer db.Close()
+// 	_, err = db.Exec(updateQuery, schoolAvg, schoolID)
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	return schoolAvg, nil
+
+// }
 
 func UpdateSchoolRankings() error {
 	db, err := sqlgeneric.Init()
@@ -212,6 +216,7 @@ func getClassesForSchool(schoolID string) ([]Class, error) {
 	if err != nil {
 		log.Printf(" err : %v", err)
 	}
+	defer db.Close()
 	rows, err := db.Query(query, schoolID)
 	if err != nil {
 		return nil, err
@@ -236,10 +241,12 @@ func getStudentsForSchool(schoolID string) ([]Student, error) {
 	if err != nil {
 		log.Printf(" err : %v", err)
 	}
+	defer db.Close()
 	rows, err := db.Query(query, schoolID)
 	if err != nil {
 		return nil, err
 	}
+
 	students, err := ScanStudents(rows)
 	if err != nil {
 		return nil, err
@@ -403,7 +410,8 @@ func ScanSchool(row *sql.Row) (School, error) {
 }
 func scanSchool(row *sql.Row) (School, error) {
 	var (
-		school        = School{}
+		school = School{}
+		// ownerID       sql.NullString
 		professorList sql.NullString
 		classList     sql.NullString
 		StudentList   sql.NullString
@@ -411,7 +419,7 @@ func scanSchool(row *sql.Row) (School, error) {
 	)
 	err := row.Scan(
 		&school.SchoolID,
-		&school.OwnerID,
+		// &ownerID,
 		&school.SchoolName,
 		&schAvg,
 		&school.Ranking,
@@ -431,6 +439,9 @@ func scanSchool(row *sql.Row) (School, error) {
 			fmt.Println(err)
 		}
 	}
+	// if ownerID.Valid {
+	// 	school.OwnerID = ownerID.String
+	// }
 	if professorList.Valid {
 		school.ProfessorList = removeBrackets(strings.Split(professorList.String, ","))
 	}
@@ -450,7 +461,8 @@ func ScanSchools(rows *sql.Rows) ([]School, error) {
 func scanSchools(rows *sql.Rows) ([]School, error) {
 	defer rows.Close()
 	var (
-		schools       = []School{}
+		schools = []School{}
+		//ownerID       sql.NullString
 		professorList sql.NullString
 		classList     sql.NullString
 		StudentList   sql.NullString
@@ -460,7 +472,7 @@ func scanSchools(rows *sql.Rows) ([]School, error) {
 		school := School{}
 		err := rows.Scan(
 			&school.SchoolID,
-			&school.OwnerID,
+			//&ownerID,
 			&school.SchoolName,
 			&schAvg,
 			&school.Ranking,
@@ -481,11 +493,13 @@ func scanSchools(rows *sql.Rows) ([]School, error) {
 				fmt.Println(err)
 			}
 		}
+		// if ownerID.Valid {
+		// 	school.OwnerID = ownerID.String
+		// }
 		if professorList.Valid {
 			school.ProfessorList = removeBrackets(strings.Split(professorList.String, ","))
 		}
 		if classList.Valid {
-
 			school.ClassList = removeBrackets(strings.Split(classList.String, ","))
 		}
 		if StudentList.Valid {

@@ -1,4 +1,4 @@
-package telemetry
+package students
 
 import (
 	"fmt"
@@ -6,39 +6,98 @@ import (
 	"math"
 	"math/rand"
 	"strings"
+	"sync"
 	"time"
 
 	"students/sqlgeneric"
-	"students/students"
 
 	"github.com/Pallinder/go-randomdata"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
-// This file is mostly going to be for the generation of data and batch uploading that data in a performant way
-// TODO: consider breaking file apart into parts maybe? would reduce length.
-
-// todo: fix this. Doesn't create school object naming is incorrect now with new addition
-// CreateSchool: creates a school of 5 classes with 5 professors per grade with 12 grades.
-func NewSchool(studentsPerGrade int, ownerID, schoolName string) (students.School, error) {
-	return newSchool(studentsPerGrade, ownerID, schoolName)
+type SchoolCreationStatus_API struct {
+	Status      string `json:"status"`
+	OperationID string `json:"operation_id"`
+	School      School `json:"school,omitempty"`
+	Error       error  `json:"error,omitempty"`
 }
 
-func newSchool(studentsPerGrade int, ownerID, schoolName string) (students.School, error) {
+var schoolCreationStatuses = make(map[string]*SchoolCreationStatus_API)
+var mutex = &sync.Mutex{}
+
+func CreateOperationEntry(operationID, statusMessage string) {
+	status := &SchoolCreationStatus_API{
+		Status: statusMessage,
+	}
+	mutex.Lock()
+	schoolCreationStatuses[operationID] = status
+	mutex.Unlock()
+}
+
+func UpdateOperationStatus(operationID, statusMessage string, err error) bool {
+	// checks if exists
+	if _, ok := schoolCreationStatuses[operationID]; !ok {
+		// operationID does not exist in the map, handle the error or return
+		fmt.Println("Error: Invalid operationID")
+		fmt.Println(operationID)
+		fmt.Println(schoolCreationStatuses)
+		return false
+	}
+	// means function was hit to check if exists
+	if len(statusMessage) == 0 {
+		return true
+	}
+	if err != nil {
+		status := &SchoolCreationStatus_API{
+			Status: statusMessage,
+			Error:  err,
+		}
+		mutex.Lock()
+		schoolCreationStatuses[operationID] = status
+		mutex.Unlock()
+	} else {
+		status := &SchoolCreationStatus_API{
+			Status: statusMessage,
+		}
+		mutex.Lock()
+		schoolCreationStatuses[operationID] = status
+		mutex.Unlock()
+	}
+	return true
+}
+
+func GetOperationStatus(operationID string) (*SchoolCreationStatus_API, error) {
+	mutex.Lock()
+	status, exists := schoolCreationStatuses[operationID]
+	mutex.Unlock()
+	if !exists {
+		return nil, fmt.Errorf("no such operation")
+	}
+	return status, nil
+}
+
+// CreateSchool: creates a school.
+func NewSchool(operationID string, studentsPerGrade int, ownerID, schoolName string) (School, error) {
+	return newSchool(operationID, studentsPerGrade, ownerID, schoolName)
+}
+
+func newSchool(operationID string, studentsPerGrade int, ownerID, schoolName string) (School, error) {
 	var (
 		// struct holders
-		roster         []students.Student
-		profList       []students.Professor
-		classList      []students.Class
-		reportCardList []students.ReportCard
+		roster         []Student
+		profList       []Professor
+		classList      []Class
+		reportCardList []ReportCard
 		// empty for returns until last line
-		school students.School
+		school School
 		// list for school
 		studentList   []string
 		professorList []string
 		classesList   []string
+		updateMessage string
 	)
+
 	for i := 1; i <= 12; i++ {
 		stus, profs, classes, rcs, err := GenerateData(studentsPerGrade, i)
 		if err != nil {
@@ -48,8 +107,11 @@ func newSchool(studentsPerGrade int, ownerID, schoolName string) (students.Schoo
 		profList = append(profList, profs...)
 		classList = append(classList, classes...)
 		reportCardList = append(reportCardList, rcs...)
+		updateMessage = fmt.Sprintf("Generating grade: %d", i)
+		UpdateOperationStatus(operationID, updateMessage, nil)
 	}
-	err := BatchUploadTestData(roster, profList, classList, reportCardList, nil)
+	UpdateOperationStatus(operationID, "Uploading Data...", nil)
+	err := BatchUploadData(roster, profList, classList, reportCardList, nil)
 	if err != nil {
 		return school, err
 	}
@@ -62,46 +124,48 @@ func newSchool(studentsPerGrade int, ownerID, schoolName string) (students.Schoo
 	for _, class := range classList {
 		classesList = append(classesList, class.ClassID)
 	}
-	school, err = students.CreateSchool(schoolName, ownerID, professorList, classesList, studentList)
+	UpdateOperationStatus(operationID, "Compiling Data...", nil)
+	school, err = CreateSchool(schoolName, ownerID, professorList, classesList, studentList)
 	if err != nil {
 		return school, err
 	}
 	return school, nil
 }
-func AdminGenerateTestSchools() error {
-	var (
-		owernerID   = "The New Vibe"
-		schoolName1 = "Busta Rhymes Academy"
-		schoolName2 = "Rick and Morty Vindicators 4"
-		schoolName3 = "PLUS ULTRA ACADEMY"
-		schoolName4 = "Xavier Institue for Higher Learning"
-		schoolName5 = "Institue for UnderWater Basket Weaving"
-		stdPerGrade = 20
-	)
-	_, err := NewSchool(stdPerGrade, owernerID, schoolName1)
-	if err != nil {
-		return err
-	}
-	_, err = NewSchool(stdPerGrade, owernerID, schoolName2)
-	if err != nil {
-		return err
-	}
-	_, err = NewSchool(stdPerGrade, owernerID, schoolName3)
-	if err != nil {
-		return err
-	}
-	_, err = NewSchool(stdPerGrade, owernerID, schoolName4)
-	if err != nil {
-		return err
-	}
-	_, err = NewSchool(stdPerGrade, owernerID, schoolName5)
-	if err != nil {
-		return err
-	}
-	return nil
-}
 
-func BatchUploadTestData(studentList []students.Student, profs []students.Professor, classes []students.Class, reportCards []students.ReportCard, err error) error {
+// func AdminGenerateTestSchools() error {
+// 	var (
+// 		owernerID   = "The New Vibe"
+// 		schoolName1 = "Busta Rhymes Academy"
+// 		schoolName2 = "Rick and Morty Vindicators 4"
+// 		schoolName3 = "PLUS ULTRA ACADEMY"
+// 		schoolName4 = "Xavier Institue for Higher Learning"
+// 		schoolName5 = "Institue for UnderWater Basket Weaving"
+// 		stdPerGrade = 20
+// 	)
+// 	_, err := NewSchool(stdPerGrade, owernerID, schoolName1)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	_, err = NewSchool(stdPerGrade, owernerID, schoolName2)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	_, err = NewSchool(stdPerGrade, owernerID, schoolName3)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	_, err = NewSchool(stdPerGrade, owernerID, schoolName4)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	_, err = NewSchool(stdPerGrade, owernerID, schoolName5)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
+
+func BatchUploadData(studentList []Student, profs []Professor, classes []Class, reportCards []ReportCard, err error) error {
 	if err != nil {
 		return err
 	}
@@ -132,24 +196,30 @@ func BatchUploadTestData(studentList []students.Student, profs []students.Profes
 		return err
 	}
 
+	// UPDATING DATA SHOULD BE MOVED
 	// update classlists of professors
-	err = UpdateProfessorsClassList(classes)
-	if err != nil {
-		return err
-	}
-	// update class Avgs
-	err = UpdateClassAvgs(classes)
-	if err != nil {
-		return err
-	}
+
 	fmt.Println("professors successfully created")
 	fmt.Printf("Generated: %d students, %d report cards, %d professors and %d classes", len(studentList), len(reportCards), len(profs), len(classes))
 	fmt.Println("")
 	return nil
 }
 
+// func RunTelemetry(classes []Class) error {
+// 	err := UpdateProfessorsClassList(classes)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	// update class Avgs
+// 	err = UpdateClassAvgs(classes)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
+
 // GenerateTestData:
-func GenerateData(numStutotal int, grade int) ([]students.Student, []students.Professor, []students.Class, []students.ReportCard, error) {
+func GenerateData(numStutotal int, grade int) ([]Student, []Professor, []Class, []ReportCard, error) {
 	studentList, err := GenerateStudents(numStutotal, grade)
 	if err != nil {
 		return nil, nil, nil, nil, err
@@ -162,11 +232,11 @@ func GenerateData(numStutotal int, grade int) ([]students.Student, []students.Pr
 	for _, student := range studentList {
 		studentIDs = append(studentIDs, student.StudentID)
 	}
-	var classes []students.Class
+	var classes []Class
 	classNames := [5]string{"math", "science", "english", "physicaled", "lunch"}
 
 	for k, prof := range profs {
-		class, err := students.CreateClass(grade, prof.ProfessorID, classNames[k], studentIDs)
+		class, err := CreateClass(grade, prof.ProfessorID, classNames[k], studentIDs)
 		if err != nil {
 			return nil, nil, nil, nil, err
 		}
@@ -183,10 +253,10 @@ func GenerateData(numStutotal int, grade int) ([]students.Student, []students.Pr
 }
 
 // STUDENTS
-func GenerateStudents(numStudents int, grade int) ([]students.Student, error) {
+func GenerateStudents(numStudents int, grade int) ([]Student, error) {
 	source := rand.NewSource(time.Now().UnixNano())
 	rng := rand.New(source)
-	studentList := make([]students.Student, numStudents)
+	studentList := make([]Student, numStudents)
 
 	for i := 0; i < numStudents; i++ {
 		currentYear := grade
@@ -195,10 +265,11 @@ func GenerateStudents(numStudents int, grade int) ([]students.Student, error) {
 		age := rng.Intn(2) + 7 + grade
 
 		// Generate a random date of birth
-		dob := time.Date((currentYear - age), time.Month(rng.Intn(12)+1), rng.Intn(28)+1, 0, 0, 0, 0, time.UTC)
+		currentYearInCalendar := time.Now().Year()
+		dob := time.Date((currentYearInCalendar - age), time.Month(rng.Intn(12)+1), rng.Intn(28)+1, 0, 0, 0, 0, time.UTC)
 		enrolled := rng.Intn(2) == 1
 
-		student := students.Student{
+		student := Student{
 			StudentID:      uuid.New().String(),
 			Name:           randomdata.FullName(randomdata.RandomGender),
 			CurrentYear:    currentYear,
@@ -214,10 +285,10 @@ func GenerateStudents(numStudents int, grade int) ([]students.Student, error) {
 }
 
 // CreateNewStudents uses batch processing to commit all in one db hit to be more performant
-func CreateNewStudents(students []students.Student) error {
+func CreateNewStudents(students []Student) error {
 	return createNewStudents(students)
 }
-func createNewStudents(students []students.Student) error {
+func createNewStudents(students []Student) error {
 	placeholders := make([]string, 0, len(students))
 	batchVals := make([]interface{}, 0, len(students)*8)
 	for n, student := range students {
@@ -245,21 +316,21 @@ func createNewStudents(students []students.Student) error {
 }
 
 // REPORT CARDS
-func GenerateReportCards(studentList []students.Student, classList []students.Class) ([]students.ReportCard, error) {
+func GenerateReportCards(studentList []Student, classList []Class) ([]ReportCard, error) {
 	return generateReportCards(studentList, classList)
 }
-func generateReportCards(studentList []students.Student, classList []students.Class) ([]students.ReportCard, error) {
+func generateReportCards(studentList []Student, classList []Class) ([]ReportCard, error) {
 	source := rand.NewSource(time.Now().UnixNano())
 	rng := rand.New(source)
 	var (
-		reportCards []students.ReportCard
+		reportCards []ReportCard
 	)
 	classIDs := []string{}
 	for _, class := range classList {
 		classIDs = append(classIDs, class.ClassID)
 	}
 	for _, student := range studentList {
-		reportCard := students.ReportCard{
+		reportCard := ReportCard{
 			StudentID:  student.StudentID,
 			Math:       float64(rng.Intn(400)) / 100.0,
 			Science:    float64(rng.Intn(400)) / 100.0,
@@ -273,10 +344,10 @@ func generateReportCards(studentList []students.Student, classList []students.Cl
 	return reportCards, nil
 }
 
-func CreateReportCards(reportCards []students.ReportCard) error {
+func CreateReportCards(reportCards []ReportCard) error {
 	return createReportCards(reportCards)
 }
-func createReportCards(reportCards []students.ReportCard) error {
+func createReportCards(reportCards []ReportCard) error {
 	var (
 		values       []interface{}
 		placeholders []string
@@ -302,21 +373,17 @@ func createReportCards(reportCards []students.ReportCard) error {
 	return nil
 }
 
-// TODO: batch deletes.
-// TODO: might just have some drop and create table statement that run the student generation based on size after set it up to a handler?
-// TODO: maybe do a run telemetry button and grabs the stat page for your front page?
-
 // PROFESSORS
-func GenerateProfessors(numProfs int) ([]students.Professor, error) {
+func GenerateProfessors(numProfs int) ([]Professor, error) {
 	return generateProfessors(numProfs)
 }
-func generateProfessors(numProfs int) ([]students.Professor, error) {
-	profList := make([]students.Professor, numProfs)
+func generateProfessors(numProfs int) ([]Professor, error) {
+	profList := make([]Professor, numProfs)
 	for i := 0; i < numProfs; i++ {
 		profID := uuid.New().String()
 		name := randomdata.FullName(randomdata.RandomGender)
 
-		prof := students.Professor{
+		prof := Professor{
 			ProfessorID: profID,
 			Name:        name,
 		}
@@ -325,10 +392,10 @@ func generateProfessors(numProfs int) ([]students.Professor, error) {
 	return profList, nil
 }
 
-func CreateProfessors(profs []students.Professor) error {
+func CreateProfessors(profs []Professor) error {
 	return createProfessors(profs)
 }
-func createProfessors(profs []students.Professor) error {
+func createProfessors(profs []Professor) error {
 	var placeholders []string
 	var values []interface{}
 	for i, prof := range profs {
@@ -351,10 +418,10 @@ func createProfessors(profs []students.Professor) error {
 	return nil
 }
 
-func DeleteReportCards(students []students.Student) error {
+func DeleteReportCards(students []Student) error {
 	return deleteReportCards(students)
 }
-func deleteReportCards(students []students.Student) error {
+func deleteReportCards(students []Student) error {
 	batch := make([]string, 0, len(students))
 	batchVals := make([]interface{}, 0, len(students))
 	for n, student := range students {
@@ -374,36 +441,36 @@ func deleteReportCards(students []students.Student) error {
 	return nil
 }
 
-func DeleteTables() error {
-	return deleteTables()
-}
-func deleteTables() error {
-	var (
-		students    = `DELETE FROM Students`
-		reportCards = `DELETE FROM ReportCards`
-		classes     = `DELETE FROM Classes`
-		professors  = `DELETE FROM Professors`
-	)
+// func DeleteTables() error {
+// 	return deleteTables()
+// }
+// func deleteTables() error {
+// 	var (
+// 		students    = `DELETE FROM Students`
+// 		reportCards = `DELETE FROM ReportCards`
+// 		classes     = `DELETE FROM Classes`
+// 		professors  = `DELETE FROM Professors`
+// 	)
 
-	db, err := sqlgeneric.Init()
-	if err != nil {
-		log.Println(" err : ", err)
-	}
-	_, err = db.Exec(students)
-	if err != nil {
-		return err
-	}
-	_, err = db.Exec(reportCards)
-	if err != nil {
-		return err
-	}
-	_, err = db.Exec(classes)
-	if err != nil {
-		return err
-	}
-	_, err = db.Exec(professors)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+// 	db, err := sqlgeneric.Init()
+// 	if err != nil {
+// 		log.Println(" err : ", err)
+// 	}
+// 	_, err = db.Exec(students)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	_, err = db.Exec(reportCards)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	_, err = db.Exec(classes)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	_, err = db.Exec(professors)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }

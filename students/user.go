@@ -6,12 +6,9 @@ import (
 	"log"
 	"strings"
 	"students/sqlgeneric"
-	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/exp/slices"
 )
 
@@ -112,41 +109,6 @@ func getUserByUserName(userName string) (User, error) {
 	return user, nil
 }
 
-// using bycrypt and jwt here
-func AuthenticateUser(userName string, password string) (bool, User, error) {
-	user, err := GetUserByUserName(userName)
-	if err != nil {
-		return false, User{}, err
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(password))
-	if err != nil {
-		return false, User{}, nil
-	}
-	user.HashedPassword = ""
-	return true, user, nil
-}
-
-// generate token for future auth
-func GenerateToken(ownerID, userName, email string) (string, error) {
-	if len(email) != 0 {
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"sub":      userName,
-			"owner_id": ownerID,
-			"email":    email,
-			"exp":      time.Now().Add(30 * time.Minute).Unix(),
-		})
-		return token.SignedString([]byte("secret-key"))
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":      userName,
-		"owner_id": ownerID,
-		"exp":      time.Now().Add(30 * time.Minute).Unix(),
-	})
-	return token.SignedString([]byte("secret-key"))
-
-}
-
 func (opts UpdateUserOptions) UpdateUser() error {
 	return opts.updateUser()
 }
@@ -163,15 +125,23 @@ func (opts UpdateUserOptions) updateUser() error {
 		i++
 	}
 	if len(opts.Email) != 0 {
-		SQL += fmt.Sprintf(" email = $%d,", i)
-		values = append(values, opts.Email)
-		i++
+		if opts.Email == "-1" {
+			SQL += fmt.Sprintf(" email = $%d,", i)
+			values = append(values, "")
+			i++
+		} else {
+			SQL += fmt.Sprintf(" email = $%d,", i)
+			values = append(values, opts.Email)
+			i++
+		}
 	}
 	if len(opts.HashedPassword) != 0 {
 		SQL += fmt.Sprintf(" hashed_password = $%d,", i)
 		values = append(values, opts.HashedPassword)
 		i++
 	}
+	// this triggers sometimes unintentionally because of add school and remove school need to be careful
+	// if I decide to add this functionality later.
 	if len(opts.AddSchoolList) != 0 || len(opts.RemoveSchoolList) != 0 {
 		schoolList, err := opts.prepUserSchoolListUpdate()
 		if err != nil {
@@ -232,11 +202,12 @@ func ScanUser(row *sql.Row) (User, error) {
 	var (
 		user       = User{}
 		schoolList sql.NullString
+		email      sql.NullString
 	)
 	err := row.Scan(
 		&user.OwnerID,
 		&user.UserName,
-		&user.Email,
+		&email,
 		&user.HashedPassword,
 		&schoolList)
 	if err != nil {
@@ -244,6 +215,9 @@ func ScanUser(row *sql.Row) (User, error) {
 	}
 	if schoolList.Valid {
 		user.SchoolList = strings.Split(schoolList.String, ",")
+	}
+	if email.Valid {
+		user.Email = email.String
 	}
 	return user, nil
 }

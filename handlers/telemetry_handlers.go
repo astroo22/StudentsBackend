@@ -6,10 +6,13 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"students/client"
+	"students/logger"
 	"students/students"
-	"students/students/telemetry"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
 func CreateNewSchoolHandler(w http.ResponseWriter, r *http.Request) {
@@ -19,23 +22,78 @@ func CreateNewSchoolHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "Invalid request payload")
+		fmt.Printf("err %v", err)
 		return
 	} else if numPerGrade > 100 {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "Invalid request payload")
+		fmt.Println(err)
 		return
 	}
 	name := r.FormValue("name")
-	school, err := telemetry.NewSchool(numPerGrade, owner_id, name)
+	logger.Log.WithFields(logrus.Fields{
+		"owner_id": owner_id,
+		"name":     name,
+	}).Info("created a school")
+
+	operationID := uuid.NewString()
+
+	students.CreateOperationEntry(operationID, "in progress")
+
+	go func() {
+		new_school, err := students.NewSchool(operationID, numPerGrade, owner_id, name)
+		if err != nil {
+			students.UpdateOperationStatus(operationID, "error", err)
+			return
+		}
+		// maybe issue here will just do a school for now see how goes
+		students.UpdateOperationStatus(operationID, "Complete", err)
+		school := new_school
+		status := students.SchoolCreationStatus_API{
+			Status: "Complete",
+			School: school,
+		}
+
+		logger.Log.WithFields(logrus.Fields{
+			"owner_id": owner_id,
+			"name":     name,
+		}).Info("Finished creating the school")
+
+		ret, err := json.Marshal(status)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "Unexpected error marshalling response")
+			return
+		}
+		w.Write(ret)
+	}()
+
+	status := students.SchoolCreationStatus_API{
+		Status:      "School creation in progress",
+		OperationID: operationID,
+	}
+	ret, err := json.Marshal(status)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, "internal server error")
+		fmt.Fprint(w, "Unexpected error marshalling response")
 		return
 	}
-	ret, err := json.Marshal(school)
+	w.Write(ret)
+}
+
+func SchoolCreationStatusHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	operationID := vars["operation_id"]
+
+	status, err := students.GetOperationStatus(operationID)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	ret, err := json.Marshal(status)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, "Unexpected error mashalling professor")
+		fmt.Fprint(w, "Unexpected error marshalling response")
 		return
 	}
 	w.Write(ret)
@@ -58,7 +116,7 @@ func GetGradeAvgForSchoolHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// attempt update  TODO: fix this function to auto check if the values are 0.0 and run a class avg update if so
-	gradeAvgList, err := telemetry.GetGradeAvgForSchool(schoolID)
+	gradeAvgList, err := students.GetGradeAvgForSchool(schoolID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Error getting grade averages: %v", err)
@@ -66,19 +124,13 @@ func GetGradeAvgForSchoolHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// means update
 	if gradeAvgList[0].AvgGPA == 0.0 {
-		classList, err := students.GetClassesForSchool(schoolID)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprint(w, "error on class get")
-			return
-		}
-		err = telemetry.UpdateClassAvgs(classList)
+		err = students.UpdateClassAvgs(schoolID)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, "error on class avg update")
 			return
 		}
-		gradeAvgList, err = telemetry.GetGradeAvgForSchool(schoolID)
+		gradeAvgList, err = students.GetGradeAvgForSchool(schoolID)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprintf(w, "Error getting grade averages: %v", err)
@@ -106,7 +158,7 @@ func GetBestProfessorsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Unexpected error  professorList")
 		return
 	}
-	bestProfessors, err := telemetry.GetBestProfessors(professorList)
+	bestProfessors, err := students.GetBestProfessors(professorList)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		fmt.Printf("logging error at professorget %v", err)
@@ -114,20 +166,20 @@ func GetBestProfessorsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if bestProfessors[0].StudentAvg == 0 {
 		fmt.Println("Found values needing update for professors. Running updates!")
-		err = telemetry.UpdateProfessorsStudentAvgs(professorList)
+		err = students.UpdateProfessorsStudentAvgs(professorList)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, "Unexpected error during value updates")
 			fmt.Printf("logging error at professorupdate %v", err)
 			return
 		}
-		bestProfessors, err = telemetry.GetBestProfessors(professorList)
+		bestProfessors, err = students.GetBestProfessors(professorList)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
-	ret, err := json.Marshal(bestProfessors)
+	ret, err := json.Marshal(client.ProfessorsToAPI(bestProfessors))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling professor")

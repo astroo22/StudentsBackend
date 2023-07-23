@@ -111,6 +111,42 @@ func getReportCards(studentIDs []string) ([]ReportCard, error) {
 	}
 	return reportCards, nil
 }
+func GetReportCardsOfEnrolled(studentIDs []string) ([]ReportCard, error) {
+	return getReportCardsOfEnrolled(studentIDs)
+}
+
+func getReportCardsOfEnrolled(studentIDs []string) ([]ReportCard, error) {
+	if len(studentIDs) == 0 {
+		return nil, fmt.Errorf("no data")
+	}
+	placeholders := make([]string, 0, len(studentIDs))
+	batchVals := make([]interface{}, 0, len(studentIDs))
+	for i := 0; i < len(studentIDs); i++ {
+		placeholders = append(placeholders, fmt.Sprintf("$%d", i+1))
+		batchVals = append(batchVals, studentIDs[i])
+	}
+
+	getStatement := fmt.Sprintf(`SELECT ReportCards.* FROM ReportCards 
+		JOIN Students ON ReportCards.student_id = Students.student_id 
+		WHERE ReportCards.student_id IN (%s) AND Students.enrolled = true`, strings.Join(placeholders, ","))
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	defer db.Close()
+	ret, err := db.Query(getStatement, batchVals...)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	reportCards, err := ScanReportCards(ret)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	return reportCards, nil
+}
 
 func (opts UpdateReportCardOptions) UpdateReportCard() error {
 	return opts.updateReportCard()

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"students/client"
 	"students/students"
 
 	"github.com/gorilla/mux"
@@ -43,18 +44,20 @@ func GetReportCardHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Invalid request payload")
 		return
 	}
-	grade, err := students.GetReportCard(studentID)
+	reportCard, err := students.GetReportCard(studentID)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprint(w, "Grade not found")
+		fmt.Fprint(w, "report card not found")
 		return
 	}
-	ret, err := json.Marshal(grade)
+	rc := client.ReportCardToAPI(reportCard)
+	ret, err := json.Marshal(rc)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling class")
 		return
 	}
+	fmt.Println("GetReportCard: returned report card")
 	w.Write(ret)
 }
 

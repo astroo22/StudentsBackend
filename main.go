@@ -2,16 +2,24 @@ package main
 
 import (
 	"fmt"
-	"log"
+
 	"net/http"
+	"students/auth"
 	"students/handlers"
 
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
+
+var log = logrus.New()
 
 func main() {
 
 	fmt.Println("HEREEE WE GOOOOOO")
+	err := auth.LoadSecretKey()
+	if err != nil {
+		return
+	}
 	// var(
 	// 	lastUpdate = time.Now()
 	// 	interval = 10 * time.Minute
@@ -27,50 +35,59 @@ func main() {
 	//router := http.NewServeMux()
 	router := mux.NewRouter()
 
+	// backend status
+	router.HandleFunc("/status", handlers.BackendStatus).Methods("GET")
+
 	// Set up the routes for Students
-	router.HandleFunc("/students", handlers.CreateStudentHandler).Methods("POST")
+	//router.HandleFunc("/students", handlers.CreateStudentHandler).Methods("POST")
 	router.HandleFunc("/students", handlers.GetAllStudentsHandler).Methods("GET")
 	router.HandleFunc("/students/{student_id}", handlers.GetStudentHandler).Methods("GET")
-	router.HandleFunc("/students/{student_id}", handlers.UpdateStudentHandler).Methods("PUT")
-	router.HandleFunc("/students/{student_id}", handlers.DeleteStudentHandler).Methods("DELETE")
+	// router.HandleFunc("/students/{student_id}", handlers.UpdateStudentHandler).Methods("PUT")
+	// router.HandleFunc("/students/{student_id}", handlers.DeleteStudentHandler).Methods("DELETE")
 
 	// Set up the routes for ReportCards
-	router.HandleFunc("/reportcard", handlers.CreateReportCardHandler).Methods("POST")
+	// router.HandleFunc("/reportcard", handlers.CreateReportCardHandler).Methods("POST")
 	router.HandleFunc("/reportcard/{student_id}", handlers.GetReportCardHandler).Methods("GET")
-	router.HandleFunc("/reportcard/{student_id}", handlers.UpdateReportCardHandler).Methods("PUT")
-	router.HandleFunc("/reportcard/{student_id}", handlers.DeleteReportCardHandler).Methods("DELETE")
+	// router.HandleFunc("/reportcard/{student_id}", handlers.UpdateReportCardHandler).Methods("PUT")
+	// router.HandleFunc("/reportcard/{student_id}", handlers.DeleteReportCardHandler).Methods("DELETE")
 
 	// Set up the routes for Classes
-	router.HandleFunc("/classes", handlers.CreateClassHandler).Methods("POST")
+	// router.HandleFunc("/classes", handlers.CreateClassHandler).Methods("POST")
 	router.HandleFunc("/classes/{class_id}", handlers.GetClassHandler).Methods("GET")
-	router.HandleFunc("/classes/{class_id}", handlers.UpdateClassHandler).Methods("PUT")
-	router.HandleFunc("/classes/{class_id}", handlers.DeleteClassHandler).Methods("DELETE")
+	// router.HandleFunc("/classes/{class_id}", handlers.UpdateClassHandler).Methods("PUT")
+	// router.HandleFunc("/classes/{class_id}", handlers.DeleteClassHandler).Methods("DELETE")
 
 	// Set up the routes for Professors
-	router.HandleFunc("/professors", handlers.CreateProfessorHandler).Methods("POST")
+	// router.HandleFunc("/professors", handlers.CreateProfessorHandler).Methods("POST")
 	router.HandleFunc("/professors/{prof_id}", handlers.GetProfessorHandler).Methods("GET")
-	router.HandleFunc("/professors/{prof_id}", handlers.UpdateProfessorHandler).Methods("PUT")
-	router.HandleFunc("/professors/{prof_id}", handlers.DeleteProfessorHandler).Methods("DELETE")
+	// router.HandleFunc("/professors/{prof_id}", handlers.UpdateProfessorHandler).Methods("PUT")
+	// router.HandleFunc("/professors/{prof_id}", handlers.DeleteProfessorHandler).Methods("DELETE")
 
 	// Set up routes for the school
 	router.HandleFunc("/schools", handlers.GetAllSchools).Methods("GET")
-	router.HandleFunc("/schools/{owner_id}", handlers.GetAllSchoolsForUser).Methods("GET")
+	router.Handle("/schools/{owner_id}", auth.AuthRequired(http.HandlerFunc(handlers.GetAllSchoolsForUser))).Methods("GET")
 	router.HandleFunc("/schools/school/{school_id}", handlers.GetSchoolHandler).Methods("GET")
-	router.HandleFunc("/schools/school/{school_id}", handlers.UpdateSchoolHandler).Methods("PUT")
-	router.HandleFunc("/schools/school/{school_id}", handlers.DeleteSchoolHandler).Methods("DELETE")
+	router.Handle("/schools/school/{school_id}", auth.AuthRequired(http.HandlerFunc(handlers.UpdateSchoolHandler))).Methods("PUT")
+	router.Handle("/schools/school/{school_id}/delete", auth.AuthRequired(http.HandlerFunc(handlers.DeleteSchoolHandler))).Methods("PUT")
 	router.HandleFunc("/schools/school/{school_id}/students", handlers.GetStudentsForSchoolHandler).Methods("GET")
 	router.HandleFunc("/schools/school/{school_id}/classes", handlers.GetClassesForSchoolHandler).Methods("GET")
 
-	// data generation handlers included under telemetry
-	router.HandleFunc("/telemetry/{owner_id}", handlers.CreateNewSchoolHandler).Methods("POST")
-
 	// telemetry
+	// data generation handlers included under telemetry
+	router.Handle("/telemetry/{owner_id}", auth.AuthRequired(http.HandlerFunc(handlers.CreateNewSchoolHandler))).Methods("POST")
+	router.HandleFunc("/telemetry/creation_status/{operation_id}", handlers.SchoolCreationStatusHandler).Methods("GET")
 	router.HandleFunc("/telemetry/best-professors", handlers.GetBestProfessorsHandler).Methods("GET")
 	router.HandleFunc("/telemetry/{school_id}/classes/avg_gpa", handlers.GetGradeAvgForSchoolHandler).Methods("GET")
+	router.HandleFunc("/telemetry/{school_id}/update/avg_gpa", handlers.UpdateSchoolAvgHandler).Methods("GET")
 
 	// AUTH
 	router.HandleFunc("/login", handlers.LoginHandler).Methods("POST")
+	// might not need logout
 	router.HandleFunc("/logout", handlers.LogoutHandler).Methods("POST")
+	router.HandleFunc("/users/create_user", handlers.CreateUserHandler).Methods("POST")
+	router.Handle("/users/update_user/{owner_id}", auth.AuthRequired(http.HandlerFunc(handlers.UpdateUserHandler))).Methods("PUT")
+	router.Handle("/users/delete_user/{owner_id}", auth.AuthRequired(http.HandlerFunc(handlers.DeleteUserHandler))).Methods("DELETE")
+
 	// Start the HTTP server on port 3000
 	log.Printf("Starting server on port 3000")
 	if err := http.ListenAndServe(":3000", addCorsHeaders(router)); err != nil {

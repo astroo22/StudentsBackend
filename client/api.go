@@ -68,12 +68,16 @@ type GradeAvg_API struct {
 }
 
 type User_API struct {
-	OwnerID        string   `json:"owner_id"`
-	UserName       string   `json:"user_name"`
-	Email          string   `json:"email,omitempty"`
-	HashedPassword string   `json:"hashed_password"`
-	SchoolList     []string `json:"school_list,omitempty"`
+	OwnerID    string   `json:"owner_id"`
+	UserName   string   `json:"user_name"`
+	Email      string   `json:"email,omitempty"`
+	Password   string   `json:"password"`
+	SchoolList []string `json:"school_list,omitempty"`
 }
+
+// Status for data generation operation.
+// this returns a current status of the create school to the front end.
+// I think this could be fun to flesh out and add a status return to the data generation to track in real time.
 
 // TODO: convert the remaining handlers to use the API
 // converters

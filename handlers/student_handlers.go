@@ -93,6 +93,7 @@ func GetStudentHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // should I preload this with reportcards as well?
+// TODO: I might not need this
 func GetAllStudentsHandler(w http.ResponseWriter, r *http.Request) {
 	students, err := students.GetAllStudents()
 	if err != nil {
