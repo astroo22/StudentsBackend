@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"net/http"
 	"students/auth"
@@ -88,13 +89,13 @@ func main() {
 	router.Handle("/users/update_user/{owner_id}", auth.AuthRequired(http.HandlerFunc(handlers.UpdateUserHandler))).Methods("PUT")
 	router.Handle("/users/delete_user/{owner_id}", auth.AuthRequired(http.HandlerFunc(handlers.DeleteUserHandler))).Methods("DELETE")
 
-	// Start the HTTP server on port 3000
-	log.Printf("Starting server on port 3000")
-	if err := http.ListenAndServe(":3000", addCorsHeaders(router)); err != nil {
-		log.Fatal(err)
-	}
+	// Create a config file for prod,dev
+	// create a loading function below start server
+	// no loading func created might make one when things finished tho.
+	startServer(router)
 
 }
+
 func addCorsHeaders(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -105,4 +106,23 @@ func addCorsHeaders(handler http.Handler) http.Handler {
 		}
 		handler.ServeHTTP(w, r)
 	})
+}
+
+func startServer(handler http.Handler) {
+
+	appEnv := os.Getenv("APP_ENV")
+	if appEnv == "" {
+		// when done this will become dev and prod will only build through pipe
+		appEnv = "dev"
+		//appEnv = "prod"
+	}
+	if appEnv == "prod" {
+		log.Println("Starting server prod on :443")
+		log.Fatal(http.ListenAndServeTLS(":443", "cert.pem", "key.pem", handler))
+
+	} else {
+		log.Println("Starting server local on :3000")
+		log.Fatal(http.ListenAndServe(":3000", addCorsHeaders(handler)))
+
+	}
 }
