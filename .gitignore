@@ -2,8 +2,6 @@
 postgrescreds.dev.yml
 postgrescreds.prod.yml
 secrets.yml
-sqlgenerics.go
 assert.go
-auth.go
 logrus.log
 todo.txt
