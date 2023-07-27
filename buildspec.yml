@@ -12,6 +12,7 @@ phases:
   pre_build:
     commands:
       - echo "Retrieving DB secrets..."
+      - mkdir -p config
       - |
         echo $DB_SECRET | jq -r '
           "host: \(.host)
