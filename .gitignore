@@ -1,5 +1,7 @@
 # Ignore config files
-*.yml
+postgrescreds.dev.yml
+postgrescreds.prod.yml
+secrets.yml
 sqlgenerics.go
 assert.go
 auth.go

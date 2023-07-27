@@ -118,7 +118,7 @@ func startServer(handler http.Handler) {
 	}
 	if appEnv == "prod" {
 		log.Println("Starting server prod on :443")
-		log.Fatal(http.ListenAndServeTLS(":443", "cert.pem", "key.pem", handler))
+		log.Fatal(http.ListenAndServe(":80", handler))
 
 	} else {
 		log.Println("Starting server local on :3000")

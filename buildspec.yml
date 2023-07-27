@@ -1,0 +1,29 @@
+version: 0.2
+
+env:
+  secrets-manager:
+    DB_SECRET: prod/backend/db
+    JWT_SECRET: prod/backend/secretkey
+
+phases:
+  install:
+    commands:
+      - apt-get install -y jq
+  pre_build:
+    commands:
+      - echo "Retrieving DB secrets..."
+      - |
+        echo $DB_SECRET | jq -r '
+          "host: \(.host)
+          port: \(.port)
+          username: \(.username)
+          password: \(.password)
+          database: \(.database)"' > postgrescreds.prod.yml
+      - echo "Retrieving JWT secret..."
+      - |
+        echo $JWT_SECRET | jq -r '
+          "secretKey: \(.secretKey)"' > secrets.yml
+  build:
+    commands:
+      - echo "Running your build commands..."
+      - go build -ldflags "-w -s" -o students.exe
