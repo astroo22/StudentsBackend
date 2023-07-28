@@ -8,11 +8,11 @@ env:
 phases:
   install:
     commands:
-      - apt-get install -y jq
+      - "apt-get install -y jq"
   pre_build:
     commands:
-      - echo "Retrieving DB secrets..."
-      - mkdir -p config
+      - "echo 'Retrieving DB secrets...'"
+      - "mkdir -p config"
       - |
         echo $DB_SECRET | jq -r '
           "host: \(.host)
@@ -20,19 +20,20 @@ phases:
           username: \(.username)
           password: \(.password)
           database: \(.database)"' > config/postgrescreds.prod.yml
-      - echo "Retrieving JWT secret..."
+      - "echo 'Retrieving JWT secret...'"
       - |
         echo $JWT_SECRET | jq -r '
           "secretKey: \(.secretKey)"' > config/secrets.yml
-      - echo "web: bin/students" > Procfile
   build:
     commands:
-      - echo "Running your build commands..."
-      - mkdir -p bin
-      - GOOS=linux GOARCH=amd64 go build -ldflags "-w -s" -o bin/students
+      - "echo 'Running your build commands...'"
+      - "mkdir -p bin"
+      - "GOOS=linux GOARCH=amd64 go build -ldflags '-w -s' -o bin/students"
+      - "echo 'web: bin/students' > Procfile"
   post_build:
     commands:
-      - echo "Packaging up build artifacts..."
+      - "echo 'Packaging up build artifacts...'"
+      
 artifacts:
   files:
   - bin/students
