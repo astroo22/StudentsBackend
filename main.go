@@ -107,6 +107,20 @@ func addCorsHeaders(handler http.Handler) http.Handler {
 		handler.ServeHTTP(w, r)
 	})
 }
+func addCorsHeadersProd(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Access-Control-Allow-Origin", "https://www.hiremeresume.com")
+		w.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		w.Header().Add("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		handler.ServeHTTP(w, r)
+	})
+}
 
 func startServer(handler http.Handler) {
 
@@ -118,7 +132,7 @@ func startServer(handler http.Handler) {
 	}
 	if appEnv == "prod" {
 		log.Println("Starting server prod on :80")
-		log.Fatal(http.ListenAndServe(":80", handler))
+		log.Fatal(http.ListenAndServe(":80", addCorsHeadersProd(handler)))
 
 	} else {
 		log.Println("Starting server local on :3000")
