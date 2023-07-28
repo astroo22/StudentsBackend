@@ -37,3 +37,4 @@ phases:
 artifacts:
   files:
     - build_artifacts.zip
+    - Procfile
