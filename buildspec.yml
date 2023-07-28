@@ -33,7 +33,6 @@ phases:
     commands:
       - echo "Packaging up build artifacts..."
       - echo "web: bin/students" > Procfile
-       
 artifacts:
   files:
   - bin/students
