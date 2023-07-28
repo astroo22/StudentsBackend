@@ -27,7 +27,8 @@ phases:
   build:
     commands:
       - echo "Running your build commands..."
-      - go build -ldflags "-w -s" -o students.exe
+      - mkdir -p bin
+      - GOOS=linux GOARCH=amd64 go build -ldflags "-w -s" -o bin/students.exe
   post_build:
     commands:
       - echo "Packaging up build artifacts..."
