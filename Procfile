@@ -1,1 +1,1 @@
-web: bin/students.exe
+web: bin/students
