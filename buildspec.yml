@@ -32,8 +32,9 @@ phases:
   post_build:
     commands:
       - echo "Packaging up build artifacts..."
-      - zip -r build_artifacts.zip bin/students config/ Procfile
        
 artifacts:
   files:
-    - build_artifacts.zip
+  - bin/students
+  - config/**/*
+  - Procfile
