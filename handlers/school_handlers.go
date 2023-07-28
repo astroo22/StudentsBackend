@@ -24,7 +24,7 @@ func GetAllSchools(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Internal server error")
 		return
 	}
-	fmt.Println("GetALLSchools: all schools returned")
+	fmt.Println("GetALLSchools: all schools returned!")
 	ret, err := json.Marshal(client.SchoolsToAPI(schools))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
