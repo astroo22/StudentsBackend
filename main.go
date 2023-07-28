@@ -117,7 +117,7 @@ func startServer(handler http.Handler) {
 		//appEnv = "prod"
 	}
 	if appEnv == "prod" {
-		log.Println("Starting server prod on :443")
+		log.Println("Starting server prod on :80")
 		log.Fatal(http.ListenAndServe(":80", handler))
 
 	} else {
