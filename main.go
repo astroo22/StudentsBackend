@@ -132,7 +132,7 @@ func startServer(handler http.Handler) {
 	}
 	if appEnv == "prod" {
 		log.Println("Starting server prod on :80")
-		log.Fatal(http.ListenAndServe(":80", addCorsHeadersProd(handler)))
+		log.Fatal(http.ListenAndServe(":8080", addCorsHeadersProd(handler)))
 
 	} else {
 		log.Println("Starting server local on :3000")
