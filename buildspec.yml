@@ -24,6 +24,7 @@ phases:
       - |
         echo $JWT_SECRET | jq -r '
           "secretKey: \(.secretKey)"' > config/secrets.yml
+      - echo "web: bin/students" > Procfile
   build:
     commands:
       - echo "Running your build commands..."

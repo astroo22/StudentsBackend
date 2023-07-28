@@ -1,1 +1,1 @@
-web: ./students
+web: bin/students
