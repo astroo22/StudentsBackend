@@ -27,12 +27,11 @@ phases:
   build:
     commands:
       - echo "Running your build commands..."
-      - mkdir -p bin
-      - GOOS=linux GOARCH=amd64 go build -ldflags "-w -s" -o bin/students
+      - GOOS=linux GOARCH=amd64 go build -ldflags "-w -s" -o students
   post_build:
     commands:
       - echo "Packaging up build artifacts..."
-      - zip -r build_artifacts.zip students.exe config/
+      - zip -r build_artifacts.zip students config/
        
 artifacts:
   files:
