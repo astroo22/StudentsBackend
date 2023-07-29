@@ -35,6 +35,7 @@ func getYMLcreds() Config {
 	config := Config{}
 	err = yaml.Unmarshal(creds, &config)
 	if err != nil {
+		log.Println("in yml unmarshal file might not exist maybe?")
 		log.Fatal("Error unmarshalling file: ", err)
 	}
 	return config
