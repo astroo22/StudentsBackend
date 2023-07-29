@@ -16,7 +16,7 @@ import (
 
 // GetAllSchools
 func GetAllSchools(w http.ResponseWriter, r *http.Request) {
-
+	fmt.Println("hit get all schools")
 	schools, err := students.GetAllSchools()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
