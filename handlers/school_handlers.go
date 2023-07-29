@@ -29,6 +29,7 @@ func GetAllSchools(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling school")
+		fmt.Println(err)
 		return
 	}
 	w.Write(ret)
