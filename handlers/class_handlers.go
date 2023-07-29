@@ -95,7 +95,7 @@ func UpdateClassHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		opts.ProfessorID = profID
 	}
-
+	//
 	classAvg, err := strconv.ParseFloat(r.FormValue("class_avg"), 64)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
