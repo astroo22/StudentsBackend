@@ -16,17 +16,19 @@ phases:
       - "echo 'Retrieving DB secrets...'"
       - "mkdir -p config"
       - |
-        echo $DB_SECRET | jq -r '
-          "host: \(.host)
-          port: \(.port)
-          username: \(.username)
-          password: \(.password)
-          database: \(.database)"' > config/postgrescreds.prod.yml
+        echo $DB_SECRET | jq -r '{
+          host: .host,
+          port: .port,
+          username: .username,
+          password: .password,
+          database: .database
+        }' > config/postgrescreds.prod.yml
       - "echo 'Retrieving JWT secret...'"
       - "if [ $? -eq 0 ]; then echo 'Credentials file created successfully'; else echo 'Failed to create credentials file'; fi"
       - |
-        echo $JWT_SECRET | jq -r '
-          "secretKey: \(.secretKey)"' > config/secrets.yml
+        echo $JWT_SECRET | jq -r '{
+          secretKey: .secretKey
+        }' > config/secrets.yml
   build:
     commands:
       - "echo 'Running your build commands...'"
