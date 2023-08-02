@@ -45,3 +45,4 @@ artifacts:
   - config/**/*
   - Procfile
   - appspec.yml
+  - deploy-scripts/**/*
