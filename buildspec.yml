@@ -44,3 +44,4 @@ artifacts:
   - bin/students
   - config/**/*
   - Procfile
+  - appspec.yml
