@@ -78,7 +78,7 @@ func UpdateClassHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Class not found")
 		return
 	} else {
-		// do a get check if exists else return
+		// do a get check if exists else returnz
 		_, err := students.GetClass(classID)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)

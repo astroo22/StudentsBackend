@@ -45,4 +45,6 @@ artifacts:
   - config/**/*
   - Procfile
   - appspec.yml
-  - deploy-scripts/**/*
+  - deploy-scripts/after-install.sh
+  - deploy-scripts/start-app.sh
+  - deploy-scripts/stop-app.sh
