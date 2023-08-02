@@ -127,7 +127,7 @@ func Test_CrudClassHandlers(t *testing.T) {
 	reqUPDATE.Header.Set("Content-Length", strconv.Itoa(len(form.Encode())))
 
 	r.ServeHTTP(rr, reqUPDATE)
-	// Check the response status code
+	// Check the response status code.
 	if rr.Code != http.StatusOK {
 		t.Errorf("handler returned wrong status code: got %v want %v", rr.Code, http.StatusOK)
 	}
