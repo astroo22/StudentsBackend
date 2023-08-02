@@ -1,0 +1,14 @@
+version: 0.0
+os: linux
+files:
+  - source: bin/students
+    destination: /var/www/backend/bin
+  - source: config
+    destination: /var/www/backend/config
+hooks:
+  AfterInstall:
+    - location: deploy-scripts/after-install.sh
+  ApplicationStart:
+    - location: deploy-scripts/start-app.sh
+  ApplicationStop:
+    - location: deploy-scripts/stop-app.sh
