@@ -5,8 +5,10 @@ files:
     destination: /var/www/backend/bin
   - source: config
     destination: /var/www/backend/config
+ - source: deploy-scripts
+    destination: /var/www/backend/deploy-scripts
 hooks:
   AfterInstall:
-    - location: deploy-scripts/after-install.sh
+    - location: /var/www/backend/deploy-scripts/after-install.sh
   ApplicationStart:
-    - location: deploy-scripts/start-app.sh
+    - location: /var/www/backend/deploy-scripts/start-app.sh
