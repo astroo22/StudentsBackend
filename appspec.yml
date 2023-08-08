@@ -10,5 +10,3 @@ hooks:
     - location: deploy-scripts/after-install.sh
   ApplicationStart:
     - location: deploy-scripts/start-app.sh
-  ApplicationStop:
-    - location: deploy-scripts/stop-app.sh
