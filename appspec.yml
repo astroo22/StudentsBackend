@@ -5,7 +5,7 @@ files:
     destination: /var/www/backend/bin
   - source: config
     destination: /var/www/backend/config
- - source: deploy-scripts
+  - source: deploy-scripts
     destination: /var/www/backend/deploy-scripts
 hooks:
   AfterInstall:
