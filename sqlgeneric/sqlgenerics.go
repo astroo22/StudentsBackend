@@ -19,7 +19,7 @@ type Config struct {
 	Database string `yaml:"database"`
 }
 
-const prodfilepath = "/var/www/backend/config/postgrescreds.prod.yml"
+const prodfilepath = "./config/postgrescreds.prod.yml"
 const filepath = "config/postgrescreds.dev.yml"
 
 func getYMLcreds() Config {
@@ -37,6 +37,7 @@ func getYMLcreds() Config {
 	fmt.Println(fp)
 	creds, err := os.ReadFile(fp)
 	if err != nil {
+		fmt.Println("error reading yml secret")
 		log.Fatal("Error reading file: ", err)
 	}
 	config := Config{}
@@ -45,6 +46,7 @@ func getYMLcreds() Config {
 		log.Println("in yml unmarshal file might not exist maybe?")
 		log.Fatal("Error unmarshalling file: ", err)
 	}
+	fmt.Println("successfully got through ymlcreds")
 	return config
 }
 func fmtPsqlConn(data Config) string {
