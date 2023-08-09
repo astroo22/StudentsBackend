@@ -46,6 +46,7 @@ func getYMLsecrets() (Conf, error) {
 	if err != nil {
 		fmt.Println(err)
 		log.Fatal("Error reading file: ", err)
+		return Conf{}, err
 	}
 
 	// yamlContent, err := yaml.JSONToYAML(creds)
@@ -53,13 +54,14 @@ func getYMLsecrets() (Conf, error) {
 	// 	log.Fatal("Error converting JSON to YAML: ", err)
 	// }
 
-	fmt.Println("why are u dying and where?")
 	config := Conf{}
 	err = json.Unmarshal(creds, &config)
 	if err != nil {
 		fmt.Println(err)
 		log.Fatal("Error unmarshalling file: ", err)
+		return Conf{}, err
 	}
+	fmt.Println("got dem secrets")
 	return config, err
 }
 func LoadSecretKey() error {

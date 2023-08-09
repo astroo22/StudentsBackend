@@ -18,7 +18,7 @@ type Config struct {
 	Database string `json:"database"`
 }
 
-const prodfilepath = "/var/www/backend/config/postgrescreds.prod.yml"
+const prodfilepath = "/var/www/backend/config/postgrescreds.prod.json"
 const filepath = "config/postgrescreds.dev.yml"
 
 // INFO: Looks like aws saves these yml values as json which is in conflict with setup
@@ -56,7 +56,7 @@ func getYMLcreds() Config {
 		log.Println("in yml unmarshal file might not exist maybe?")
 		log.Fatal("Error unmarshalling file: ", err)
 	}
-	fmt.Println("successfully got through ymlcreds")
+	fmt.Println("successfully got dem creds")
 	return config
 }
 func fmtPsqlConn(data Config) string {
