@@ -45,6 +45,7 @@ func getYMLsecrets() (Conf, error) {
 		fmt.Println(err)
 		log.Fatal("Error reading file: ", err)
 	}
+	fmt.Println("why are u dying and where?")
 	config := Conf{}
 	err = yaml.Unmarshal(creds, &config)
 	if err != nil {
