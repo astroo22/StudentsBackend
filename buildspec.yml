@@ -21,7 +21,7 @@ phases:
           port: .port,
           username: .username,
           password: .password,
-          database: .database
+          database: .dbname
         }' > config/postgrescreds.prod.yml
       - "echo 'Retrieving JWT secret...'"
       - "if [ $? -eq 0 ]; then echo 'Credentials file created successfully'; else echo 'Failed to create credentials file'; fi"

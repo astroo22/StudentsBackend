@@ -1,2 +1,2 @@
 #!/bin/bash
-/var/www/backend/bin/students &
+/var/www/backend/bin/students

@@ -27,6 +27,7 @@ func getYMLcreds() Config {
 		//log.Fatal("APP_ENV is not set")
 	}
 	filepath := fmt.Sprintf("config/postgrescreds.%s.yml", appEnv)
+	fmt.Println(filepath)
 	creds, err := os.ReadFile(filepath)
 	if err != nil {
 		log.Fatal("Error reading file: ", err)
