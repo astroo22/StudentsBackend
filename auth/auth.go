@@ -16,7 +16,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const prodfilepath = "./config/secrets.yml"
+const prodfilepath = "/var/www/backend/config/secrets.yml"
 const filepath = "config/secrets.yml"
 
 type Conf struct {

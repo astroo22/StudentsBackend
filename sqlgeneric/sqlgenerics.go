@@ -19,7 +19,7 @@ type Config struct {
 	Database string `yaml:"database"`
 }
 
-const prodfilepath = "./config/postgrescreds.prod.yml"
+const prodfilepath = "/var/www/backend/config/postgrescreds.prod.yml"
 const filepath = "config/postgrescreds.dev.yml"
 
 func getYMLcreds() Config {
