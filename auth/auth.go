@@ -16,11 +16,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const prodfilepath = "/var/www/backend/config/secrets.yml"
+const prodfilepath = "/var/www/backend/config/secrets.json"
 const filepath = "config/secrets.yml"
 
 type Conf struct {
-	SecretKey string `yaml:"secretKey"`
+	SecretKey string `json:"secretKey"`
 }
 
 var secretKey []byte
