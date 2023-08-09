@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/ghodss/yaml"
 	"golang.org/x/crypto/bcrypt"
-	"gopkg.in/yaml.v3"
 )
 
 const prodfilepath = "/var/www/backend/config/secrets.yml"
@@ -25,6 +25,8 @@ type Conf struct {
 
 var secretKey []byte
 
+// TODO: UPDATE THis to work with aws secrets manager json. READ sqlgenerics for more
+// info as this is the same issue and solution
 func getYMLsecrets() (Conf, error) {
 	// switcher for env could probably make this nicer later
 	fp := ""
@@ -45,9 +47,15 @@ func getYMLsecrets() (Conf, error) {
 		fmt.Println(err)
 		log.Fatal("Error reading file: ", err)
 	}
+
+	yamlContent, err := yaml.JSONToYAML(creds)
+	if err != nil {
+		log.Fatal("Error converting JSON to YAML: ", err)
+	}
+
 	fmt.Println("why are u dying and where?")
 	config := Conf{}
-	err = yaml.Unmarshal(creds, &config)
+	err = yaml.Unmarshal(yamlContent, &config)
 	if err != nil {
 		fmt.Println(err)
 		log.Fatal("Error unmarshalling file: ", err)
