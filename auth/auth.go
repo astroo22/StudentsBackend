@@ -48,6 +48,7 @@ func getYMLsecrets() (Conf, error) {
 	config := Conf{}
 	err = yaml.Unmarshal(creds, &config)
 	if err != nil {
+		fmt.Println(err)
 		log.Fatal("Error unmarshalling file: ", err)
 	}
 	return config, err
