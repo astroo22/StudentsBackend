@@ -2,11 +2,11 @@ package sqlgeneric
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 
-	"github.com/ghodss/yaml"
 	_ "github.com/lib/pq"
 )
 
@@ -45,13 +45,13 @@ func getYMLcreds() Config {
 		log.Fatal("Error reading file: ", err)
 	}
 
-	yamlContent, err := yaml.JSONToYAML(creds)
-	if err != nil {
-		log.Fatal("Error converting JSON to YAML: ", err)
-	}
+	// yamlContent, err := yaml.JSONToYAML(creds)
+	// if err != nil {
+	// 	log.Fatal("Error converting JSON to YAML: ", err)
+	// }
 
 	config := Config{}
-	err = yaml.Unmarshal(yamlContent, &config)
+	err = json.Unmarshal(creds, &config)
 	if err != nil {
 		log.Println("in yml unmarshal file might not exist maybe?")
 		log.Fatal("Error unmarshalling file: ", err)

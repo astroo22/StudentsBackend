@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -12,7 +13,6 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/ghodss/yaml"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -48,14 +48,14 @@ func getYMLsecrets() (Conf, error) {
 		log.Fatal("Error reading file: ", err)
 	}
 
-	yamlContent, err := yaml.JSONToYAML(creds)
-	if err != nil {
-		log.Fatal("Error converting JSON to YAML: ", err)
-	}
+	// yamlContent, err := yaml.JSONToYAML(creds)
+	// if err != nil {
+	// 	log.Fatal("Error converting JSON to YAML: ", err)
+	// }
 
 	fmt.Println("why are u dying and where?")
 	config := Conf{}
-	err = yaml.Unmarshal(yamlContent, &config)
+	err = json.Unmarshal(creds, &config)
 	if err != nil {
 		fmt.Println(err)
 		log.Fatal("Error unmarshalling file: ", err)
