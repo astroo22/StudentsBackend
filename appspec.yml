@@ -13,7 +13,10 @@ files:
 hooks:
   AfterInstall:
     - location: /var/www/backend/deploy-scripts/after-install.sh
+      runas: root
   ApplicationStart:
     - location: /var/www/backend/deploy-scripts/start-app.sh
+      runas: root
   ApplicationStop:
     - location: /var/www/backend/deploy-scripts/stop-app.sh
+      runas: root
