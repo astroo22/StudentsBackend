@@ -33,6 +33,7 @@ func getYMLsecrets() (Conf, error) {
 
 		appEnv = "dev"
 		//log.Fatal("APP_ENV is not set")
+		fmt.Println("app_env not set")
 		fp = filepath
 	} else {
 		fp = prodfilepath
