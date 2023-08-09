@@ -1,3 +1,4 @@
 #!/bin/bash
 export APP_ENV=prod
-/var/www/backend/bin/students
+/var/www/backend/bin/students &
+exit 0
