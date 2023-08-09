@@ -3,12 +3,17 @@ os: linux
 files:
   - source: bin/students
     destination: /var/www/backend/bin
+    fileExistsBehavior: OVERWRITE
   - source: config
     destination: /var/www/backend/config
+    fileExistsBehavior: OVERWRITE
   - source: deploy-scripts
     destination: /var/www/backend/deploy-scripts
+    fileExistsBehavior: OVERWRITE
 hooks:
   AfterInstall:
     - location: /var/www/backend/deploy-scripts/after-install.sh
   ApplicationStart:
     - location: /var/www/backend/deploy-scripts/start-app.sh
+  ApplicationStop:
+    - location: /var/www/backend/deploy-scripts/stop-app.sh
