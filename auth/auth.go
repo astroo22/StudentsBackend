@@ -16,6 +16,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const prodfilepath = "/var/www/backend/config/secrets.yml"
 const filepath = "config/secrets.yml"
 
 type Conf struct {
@@ -25,7 +26,20 @@ type Conf struct {
 var secretKey []byte
 
 func getYMLsecrets() (Conf, error) {
-	creds, err := os.ReadFile(filepath)
+	// switcher for env could probably make this nicer later
+	fp := ""
+	appEnv := os.Getenv("APP_ENV")
+	if appEnv == "" {
+
+		appEnv = "dev"
+		//log.Fatal("APP_ENV is not set")
+		fp = filepath
+	} else {
+		fp = prodfilepath
+	}
+
+	fmt.Println(fp)
+	creds, err := os.ReadFile(fp)
 	if err != nil {
 		fmt.Println(err)
 		log.Fatal("Error reading file: ", err)

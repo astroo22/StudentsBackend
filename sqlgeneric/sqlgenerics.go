@@ -19,16 +19,23 @@ type Config struct {
 	Database string `yaml:"database"`
 }
 
+const prodfilepath = "/var/www/backend/config/postgrescreds.prod.yml"
+const filepath = "config/postgrescreds.dev.yml"
+
 func getYMLcreds() Config {
+	fp := ""
 	appEnv := os.Getenv("APP_ENV")
 	if appEnv == "" {
 
 		appEnv = "dev"
 		//log.Fatal("APP_ENV is not set")
+		fp = filepath
+	} else {
+		fp = prodfilepath
 	}
-	filepath := fmt.Sprintf("config/postgrescreds.%s.yml", appEnv)
-	fmt.Println(filepath)
-	creds, err := os.ReadFile(filepath)
+
+	fmt.Println(fp)
+	creds, err := os.ReadFile(fp)
 	if err != nil {
 		log.Fatal("Error reading file: ", err)
 	}
