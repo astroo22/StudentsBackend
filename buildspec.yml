@@ -22,13 +22,13 @@ phases:
           username: .username,
           password: .password,
           database: .dbname
-        }' > config/postgrescreds.prod.yml
+        }' > config/postgrescreds.prod.json
       - "echo 'Retrieving JWT secret...'"
       - "if [ $? -eq 0 ]; then echo 'Credentials file created successfully'; else echo 'Failed to create credentials file'; fi"
       - |
         echo $JWT_SECRET | jq -r '{
           secretKey: .secretKey
-        }' > config/secrets.yml
+        }' > config/secrets.json
   build:
     commands:
       - "echo 'Running your build commands...'"
