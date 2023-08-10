@@ -147,6 +147,7 @@ func GetGradeAvgForSchoolHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetBestProfessorsHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("hit GetBestProfs")
 	professorIDs := r.URL.Query().Get("professor_ids")
 	if len(professorIDs) == 0 {
 		http.Error(w, "Missing professor_ids query parameter", http.StatusBadRequest)
@@ -185,5 +186,7 @@ func GetBestProfessorsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Unexpected error mashalling professor")
 		return
 	}
+	fmt.Println("completed GetBestProfs")
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(ret)
 }
