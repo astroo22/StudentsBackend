@@ -37,6 +37,7 @@ func GetAllSchools(w http.ResponseWriter, r *http.Request) {
 
 // GetClassesForSchoolHandler
 func GetClassesForSchoolHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("hit get all classes for school")
 	vars := mux.Vars(r)
 	schoolID := vars["school_id"]
 
@@ -55,6 +56,7 @@ func GetClassesForSchoolHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(ret)
 }
 func GetStudentsForSchoolHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("hit get students for school")
 	vars := mux.Vars(r)
 	schoolID := vars["school_id"]
 
@@ -76,6 +78,7 @@ func GetStudentsForSchoolHandler(w http.ResponseWriter, r *http.Request) {
 
 // GetSchoolHandler
 func GetSchoolHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("hit get school")
 	vars := mux.Vars(r)
 	schoolID := vars["school_id"]
 	if len(schoolID) == 0 {
@@ -100,6 +103,7 @@ func GetSchoolHandler(w http.ResponseWriter, r *http.Request) {
 
 // GetSchoolForUserHandler
 func GetAllSchoolsForUser(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("hit get all schools for user")
 	vars := mux.Vars(r)
 	ownerID := vars["owner_id"]
 	if len(ownerID) == 0 {
@@ -142,6 +146,7 @@ func GetAllSchoolsForUser(w http.ResponseWriter, r *http.Request) {
 
 // UpdateSchoolHandler
 func UpdateSchoolHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Hit update school handler")
 	vars := mux.Vars(r)
 	schoolID := vars["school_id"]
 	if len(schoolID) == 0 {
@@ -273,6 +278,7 @@ func UpdateSchoolHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 func UpdateSchoolAvgHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("hit updateSchoolAvgHandler")
 	vars := mux.Vars(r)
 	schoolID := vars["school_id"]
 	if len(schoolID) == 0 {

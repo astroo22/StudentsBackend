@@ -19,7 +19,7 @@ import (
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	var user client.User_API
 
-	fmt.Println("got here")
+	fmt.Println("hit create user")
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -65,6 +65,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetUserHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("hit get user")
 	vars := mux.Vars(r)
 	ownerID := vars["owner_id"]
 	user, err := students.GetUser(ownerID)
@@ -89,6 +90,7 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("hit update user")
 	opts := students.UpdateUserOptions{}
 	vars := mux.Vars(r)
 
@@ -154,6 +156,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("delete user hit")
 	vars := mux.Vars(r)
 	ownerID := vars["owner_id"]
 	userID := r.Context().Value("user_id")

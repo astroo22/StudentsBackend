@@ -37,8 +37,6 @@ func getYMLcreds() Config {
 	} else {
 		fp = prodfilepath
 	}
-
-	fmt.Println(fp)
 	creds, err := os.ReadFile(fp)
 	if err != nil {
 		fmt.Println("error reading yml secret")
@@ -56,7 +54,6 @@ func getYMLcreds() Config {
 		log.Println("in yml unmarshal file might not exist maybe?")
 		log.Fatal("Error unmarshalling file: ", err)
 	}
-	fmt.Println("successfully got dem creds")
 	return config
 }
 func fmtPsqlConn(data Config) string {

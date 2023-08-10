@@ -31,6 +31,7 @@ func CreateProfessorHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetProfessorHandler(w http.ResponseWriter, r *http.Request) {
+
 	vars := mux.Vars(r)
 	profID := vars["professor_id"]
 	professor, err := students.GetProfessor(profID)
