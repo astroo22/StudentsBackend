@@ -121,8 +121,18 @@ func addCorsHeaders(handler http.Handler) http.Handler {
 	})
 }
 func addCorsHeadersProd(handler http.Handler) http.Handler {
+	allowedOrigins := []string{
+		"https://www.hiremeresume.com",
+		"https://hiremeresume.com",
+	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "https://www.hiremeresume.com")
+		origin := r.Header.Get("Origin")
+		for _, allowed := range allowedOrigins {
+			if origin == allowed {
+				w.Header().Set("Access-Control-Allow-Origin", allowed)
+				break
+			}
+		}
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 
