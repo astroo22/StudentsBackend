@@ -44,6 +44,7 @@ func main() {
 	router := mux.NewRouter()
 	appEnv := os.Getenv("APP_ENV")
 	if appEnv == "prod" {
+		fmt.Println("Adding cors headers")
 		router.Use(addCorsHeadersProd)
 	} else {
 		router.Use(addCorsHeaders)
