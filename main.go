@@ -133,7 +133,8 @@ func addCorsHeadersProd(handler http.Handler) http.Handler {
 				break
 			}
 		}
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		fmt.Println("CORS middleware triggered for:", r.URL.Path)
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 
 		if r.Method == "OPTIONS" {
