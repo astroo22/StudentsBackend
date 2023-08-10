@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"students/client"
 	"students/logger"
 	"students/students"
@@ -148,20 +147,27 @@ func GetGradeAvgForSchoolHandler(w http.ResponseWriter, r *http.Request) {
 
 func GetBestProfessorsHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("hit GetBestProfs")
-	professorIDs := r.URL.Query().Get("professor_ids")
-	if len(professorIDs) == 0 {
-		http.Error(w, "Missing professor_ids query parameter", http.StatusBadRequest)
-		fmt.Println("no proffessor ids or could not parse")
+	var requestData struct {
+		ProfessorIDs []string `json:"professor_ids"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&requestData); err != nil {
+		http.Error(w, "Bad request data", http.StatusBadRequest)
 		return
 	}
-	professorList := strings.Split(professorIDs, ",")
-	if len(professorList) == 0 {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, "Unexpected error professorList")
-		fmt.Println("unexpected error parsing professorIDs")
+
+	if len(requestData.ProfessorIDs) == 0 {
+		http.Error(w, "Missing professor_ids in request body", http.StatusBadRequest)
 		return
 	}
-	bestProfessors, err := students.GetBestProfessors(professorList)
+	// professorList := strings.Split(professorIDs, ",")
+	// if len(professorList) == 0 {
+	// 	w.WriteHeader(http.StatusInternalServerError)
+	// 	fmt.Fprint(w, "Unexpected error professorList")
+	// 	fmt.Println("unexpected error parsing professorIDs")
+	// 	return
+	// }
+	bestProfessors, err := students.GetBestProfessors(requestData.ProfessorIDs)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		fmt.Printf("logging error at professorget %v", err)
@@ -170,14 +176,14 @@ func GetBestProfessorsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if bestProfessors[0].StudentAvg == 0 {
 		fmt.Println("Found values needing update for professors. Running updates!")
-		err = students.UpdateProfessorsStudentAvgs(professorList)
+		err = students.UpdateProfessorsStudentAvgs(requestData.ProfessorIDs)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, "Unexpected error during value updates")
 			fmt.Printf("logging error at professorupdate %v", err)
 			return
 		}
-		bestProfessors, err = students.GetBestProfessors(professorList)
+		bestProfessors, err = students.GetBestProfessors(requestData.ProfessorIDs)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
