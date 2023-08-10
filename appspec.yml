@@ -12,11 +12,11 @@ files:
     fileExistsBehavior: OVERWRITE
 hooks:
   AfterInstall:
-    - location: /deploy-scripts/after-install.sh
+    - location: /var/www/backend/deploy-scripts/after-install.sh
       runas: root
   ApplicationStart:
-    - location: /deploy-scripts/start-app.sh
+    - location: /var/www/backend/deploy-scripts/start-app.sh
       runas: root
   ApplicationStop:
-    - location: /deploy-scripts/stop-app.sh
+    - location: /var/www/backend/deploy-scripts/stop-app.sh
       runas: root

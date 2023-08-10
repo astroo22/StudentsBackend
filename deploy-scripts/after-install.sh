@@ -1,4 +1,5 @@
 #!/bin/bash
+
 LOGFILE="/var/log/after-install.log"
 
 exec 2>>$LOGFILE

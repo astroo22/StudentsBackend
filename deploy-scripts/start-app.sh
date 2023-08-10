@@ -1,4 +1,5 @@
 #!/bin/bash
+
 LOGFILE="/var/log/start-app.log"
 
 exec 2>>$LOGFILE

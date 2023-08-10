@@ -1,4 +1,5 @@
 #!/bin/bash
+
 LOGFILE="/var/log/stop-app.log"
 
 exec 2>>$LOGFILE
