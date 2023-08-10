@@ -16,7 +16,6 @@ hooks:
       runas: root
   ApplicationStart:
     - location: deploy-scripts/start-app.sh
-      runas: root
   ApplicationStop:
     - location: deploy-scripts/stop-app.sh
       runas: root
