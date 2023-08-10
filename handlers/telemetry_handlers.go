@@ -151,18 +151,21 @@ func GetBestProfessorsHandler(w http.ResponseWriter, r *http.Request) {
 	professorIDs := r.URL.Query().Get("professor_ids")
 	if len(professorIDs) == 0 {
 		http.Error(w, "Missing professor_ids query parameter", http.StatusBadRequest)
+		fmt.Println("no proffessor ids or could not parse")
 		return
 	}
 	professorList := strings.Split(professorIDs, ",")
 	if len(professorList) == 0 {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, "Unexpected error  professorList")
+		fmt.Fprint(w, "Unexpected error professorList")
+		fmt.Println("unexpected error parsing professorIDs")
 		return
 	}
 	bestProfessors, err := students.GetBestProfessors(professorList)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		fmt.Printf("logging error at professorget %v", err)
+		fmt.Println("unexpected error getting best professors")
 		return
 	}
 	if bestProfessors[0].StudentAvg == 0 {
