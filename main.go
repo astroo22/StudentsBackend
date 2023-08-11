@@ -92,7 +92,7 @@ func main() {
 	// telemetry
 	// data generation handlers included under telemetry
 	router.Handle("/telemetry/{owner_id}", auth.AuthRequired(http.HandlerFunc(handlers.CreateNewSchoolHandler))).Methods("POST")
-	router.HandleFunc("/telemetry/best-professors", handlers.GetBestProfessorsHandler).Methods("GET")
+	router.HandleFunc("/telemetry/{school_id}/best-professors", handlers.GetBestProfessorsHandler).Methods("GET")
 	router.HandleFunc("/telemetry/creation_status/{operation_id}", handlers.SchoolCreationStatusHandler).Methods("GET")
 	router.HandleFunc("/telemetry/{school_id}/classes/avg_gpa", handlers.GetGradeAvgForSchoolHandler).Methods("GET")
 	router.HandleFunc("/telemetry/{school_id}/update/avg_gpa", handlers.UpdateSchoolAvgHandler).Methods("GET")
