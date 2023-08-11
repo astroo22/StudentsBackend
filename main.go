@@ -129,6 +129,8 @@ func addCorsHeadersProd(handler http.Handler) http.Handler {
 		origin := r.Header.Get("Origin")
 		for _, allowed := range allowedOrigins {
 			if origin == allowed {
+				fmt.Printf("Allowed : %v, Origin : %v", allowed, origin)
+				fmt.Println()
 				w.Header().Set("Access-Control-Allow-Origin", allowed)
 				break
 			}
