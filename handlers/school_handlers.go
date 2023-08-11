@@ -111,22 +111,22 @@ func GetAllSchoolsForUser(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Invalid request payload")
 		return
 	}
-	userID := r.Context().Value("user_id")
-	if userID == nil {
-		// Handle error: no user ID in context
-		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprint(w, "Please log in")
-		return
-	}
-	if ownerID != userID {
-		logger.Log.WithFields(logrus.Fields{
-			"owner_id": ownerID,
-			"user_id":  userID,
-		}).Warn("attempted get of non owned object")
-		w.WriteHeader(http.StatusForbidden)
-		fmt.Fprint(w, "non authorized get attempt of unowned objects")
-		return
-	}
+	// userID := r.Context().Value("user_id")
+	// if userID == nil {
+	// 	// Handle error: no user ID in context
+	// 	w.WriteHeader(http.StatusUnauthorized)
+	// 	fmt.Fprint(w, "Please log in")
+	// 	return
+	// }
+	// if ownerID != userID {
+	// 	logger.Log.WithFields(logrus.Fields{
+	// 		"owner_id": ownerID,
+	// 		"user_id":  userID,
+	// 	}).Warn("attempted get of non owned object")
+	// 	w.WriteHeader(http.StatusForbidden)
+	// 	fmt.Fprint(w, "non authorized get attempt of unowned objects")
+	// 	return
+	// }
 	schools, err := students.GetAllSchoolsForUser(ownerID)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
