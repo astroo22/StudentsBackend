@@ -82,7 +82,7 @@ func main() {
 
 	// Set up routes for the school
 	router.HandleFunc("/schools", handlers.GetAllSchools).Methods("GET")
-	router.Handle("/schools/{owner_id}", auth.AuthRequired(http.HandlerFunc(handlers.GetAllSchoolsForUser))).Methods("GET")
+	router.HandleFunc("/schools/{owner_id}", handlers.GetAllSchoolsForUser).Methods("GET")
 	router.HandleFunc("/schools/school/{school_id}", handlers.GetSchoolHandler).Methods("GET")
 	router.Handle("/schools/school/{school_id}", auth.AuthRequired(http.HandlerFunc(handlers.UpdateSchoolHandler))).Methods("PUT")
 	router.Handle("/schools/school/{school_id}/delete", auth.AuthRequired(http.HandlerFunc(handlers.DeleteSchoolHandler))).Methods("PUT")
@@ -142,7 +142,7 @@ func addCorsHeadersProd(handler http.Handler) http.Handler {
 		}
 		fmt.Println("CORS middleware triggered for:", r.URL.Path)
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept,Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept,Content-Type, Content-Length, Accept-Encoding, Authorization")
 
 		if r.Method == "OPTIONS" {
 			fmt.Println("options branch hit")
