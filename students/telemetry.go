@@ -67,21 +67,25 @@ func GetGradeAvgForSchool(schoolID string) ([]GradeAvg_API, error) {
 
 	return gradeAvgs, nil
 }
-func GetBestProfessors(professorIDs []string) ([]Professor, error) {
-	return getBestProfessors(professorIDs)
+func GetBestProfessors(schoolID string) ([]Professor, error) {
+	return getBestProfessors(schoolID)
 }
-func getBestProfessors(professorIDs []string) ([]Professor, error) {
+func getBestProfessors(schoolID string) ([]Professor, error) {
+	school, err := GetSchool(schoolID)
+	if err != nil {
+		return nil, err
+	}
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		return nil, err
 	}
 	defer db.Close()
 
-	placeholders := make([]string, 0, len(professorIDs))
-	batchVals := make([]interface{}, 0, len(professorIDs))
-	for i := 0; i < len(professorIDs); i++ {
+	placeholders := make([]string, 0, len(school.ProfessorList))
+	batchVals := make([]interface{}, 0, len(school.ProfessorList))
+	for i := 0; i < len(school.ProfessorList); i++ {
 		placeholders = append(placeholders, fmt.Sprintf("$%d", i+1))
-		batchVals = append(batchVals, professorIDs[i])
+		batchVals = append(batchVals, school.ProfessorList[i])
 	}
 
 	getStatement := fmt.Sprintf(`SELECT * FROM Professors WHERE professor_id IN (%s) ORDER BY student_avg DESC`, strings.Join(placeholders, ","))
