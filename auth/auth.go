@@ -75,15 +75,18 @@ func LoadSecretKey() error {
 }
 
 func AuthRequired(next http.Handler) http.Handler {
+	// errors make less since the closer it is to done
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
+			log.Println("Authorization header missing")
 			http.Error(w, "Authorization header required", http.StatusUnauthorized)
 			return
 		}
 
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
+			log.Printf("Invalid Authorization header: %v", authHeader)
 			http.Error(w, "Invalid Authorization header", http.StatusUnauthorized)
 			return
 		}
@@ -93,6 +96,7 @@ func AuthRequired(next http.Handler) http.Handler {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
+		log.Printf("Token validated for userID: %v", userID)
 		// Store the userID for later use
 		ctx := context.WithValue(r.Context(), "user_id", userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
