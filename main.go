@@ -49,6 +49,8 @@ func main() {
 	} else {
 		router.Use(addCorsHeaders)
 	}
+	router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
 	// backend status
 	router.HandleFunc("/status", handlers.BackendStatus).Methods("GET")
 
@@ -139,7 +141,7 @@ func addCorsHeadersProd(handler http.Handler) http.Handler {
 		}
 		fmt.Println("CORS middleware triggered for:", r.URL.Path)
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept,Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 
 		if r.Method == "OPTIONS" {
 			fmt.Println("options branch hit")
