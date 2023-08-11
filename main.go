@@ -49,8 +49,9 @@ func main() {
 	} else {
 		router.Use(addCorsHeaders)
 	}
-	router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-
+	router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println("OPTIONS request received for:", r.URL.Path)
+	})
 	// backend status
 	router.HandleFunc("/status", handlers.BackendStatus).Methods("GET")
 
