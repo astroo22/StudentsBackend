@@ -8,14 +8,21 @@ import (
 
 var Log = logrus.New()
 
-func init() {
-	Log.Out = os.Stdout
+func Init() {
 
-	// You could set this to any `io.Writer` such as a file
-	file, err := os.OpenFile("logrus.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err == nil {
-		Log.Out = file
+	appEnv := os.Getenv("APP_ENV")
+
+	if appEnv == "prod" {
+		// Log to a file in production
+		file, err := os.OpenFile("/var/log/backend.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if err != nil {
+			Log.Fatalf("Failed to open log file: %v", err)
+		}
+		Log.SetOutput(file)
 	} else {
-		Log.Info("Failed to log to file, using default stderr")
+		// Log to standard output (terminal) in other environments
+		Log.SetOutput(os.Stdout)
 	}
+	Log.SetLevel(logrus.DebugLevel)
+	Log.SetFormatter(&logrus.TextFormatter{})
 }

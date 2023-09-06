@@ -8,6 +8,7 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
+	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
@@ -28,14 +29,14 @@ const filepath = "config/postgrescreds.dev.yml"
 // either one doesn't matter just do it later.
 func getYMLcreds() Config {
 	fp := ""
+	config := Config{}
 	appEnv := os.Getenv("APP_ENV")
-	if appEnv == "" {
+	if appEnv == "prod" {
 
-		appEnv = "dev"
 		//log.Fatal("APP_ENV is not set")
-		fp = filepath
-	} else {
 		fp = prodfilepath
+	} else {
+		fp = filepath
 	}
 	creds, err := os.ReadFile(fp)
 	if err != nil {
@@ -43,16 +44,18 @@ func getYMLcreds() Config {
 		log.Fatal("Error reading file: ", err)
 	}
 
-	// yamlContent, err := yaml.JSONToYAML(creds)
-	// if err != nil {
-	// 	log.Fatal("Error converting JSON to YAML: ", err)
-	// }
-
-	config := Config{}
-	err = json.Unmarshal(creds, &config)
-	if err != nil {
-		log.Println("in yml unmarshal file might not exist maybe?")
-		log.Fatal("Error unmarshalling file: ", err)
+	if appEnv == "prod" {
+		err = json.Unmarshal(creds, &config)
+		if err != nil {
+			log.Println("in yml unmarshal file might not exist maybe?")
+			log.Fatal("Error unmarshalling file: ", err)
+		}
+	} else {
+		err = yaml.Unmarshal(creds, &config)
+		if err != nil {
+			log.Println("in yml unmarshal file might not exist maybe?")
+			log.Fatal("Error unmarshalling file: ", err)
+		}
 	}
 	return config
 }

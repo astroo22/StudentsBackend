@@ -9,11 +9,13 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"students/logger"
 	"students/students"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
+	"gopkg.in/yaml.v2"
 )
 
 const prodfilepath = "/var/www/backend/config/secrets.json"
@@ -31,17 +33,14 @@ func getYMLsecrets() (Conf, error) {
 	// switcher for env could probably make this nicer later
 	fp := ""
 	appEnv := os.Getenv("APP_ENV")
-	if appEnv == "" {
+	if appEnv == "prod" {
 
-		appEnv = "dev"
 		//log.Fatal("APP_ENV is not set")
-		fmt.Println("app_env not set")
-		fp = filepath
-	} else {
 		fp = prodfilepath
+	} else {
+		fp = filepath
 	}
 
-	fmt.Println(fp)
 	creds, err := os.ReadFile(fp)
 	if err != nil {
 		fmt.Println(err)
@@ -55,11 +54,18 @@ func getYMLsecrets() (Conf, error) {
 	// }
 
 	config := Conf{}
-	err = json.Unmarshal(creds, &config)
-	if err != nil {
-		fmt.Println(err)
-		log.Fatal("Error unmarshalling file: ", err)
-		return Conf{}, err
+	if appEnv == "prod" {
+		err = json.Unmarshal(creds, &config)
+		if err != nil {
+			log.Println("in yml unmarshal file might not exist maybe?")
+			log.Fatal("Error unmarshalling file: ", err)
+		}
+	} else {
+		err = yaml.Unmarshal(creds, &config)
+		if err != nil {
+			log.Println("in yml unmarshal file might not exist maybe?")
+			log.Fatal("Error unmarshalling file: ", err)
+		}
 	}
 	fmt.Println("got dem secrets")
 	return config, err
@@ -76,17 +82,18 @@ func LoadSecretKey() error {
 
 func AuthRequired(next http.Handler) http.Handler {
 	// errors make less since the closer it is to done
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			log.Println("Authorization header missing")
+			logger.Log.Warning("Authorization header missing")
 			http.Error(w, "Authorization header required", http.StatusUnauthorized)
 			return
 		}
 
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			log.Printf("Invalid Authorization header: %v", authHeader)
+			logger.Log.Warning("Invalid Authorization header: %v", authHeader)
 			http.Error(w, "Invalid Authorization header", http.StatusUnauthorized)
 			return
 		}
@@ -96,7 +103,7 @@ func AuthRequired(next http.Handler) http.Handler {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
-		log.Printf("Token validated for userID: %v", userID)
+		logger.Log.Info("Token validated for userID: %v", userID)
 		// Store the userID for later use
 		ctx := context.WithValue(r.Context(), "user_id", userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
@@ -127,8 +134,7 @@ func ValidateToken(t string) (string, error) {
 		return secretKey, nil
 	})
 	if err != nil {
-		// Log the error and return, do not continue executing the function
-		fmt.Printf("error parsing token: %v", err)
+		logger.Log.Warning("error parsing token: %v", err)
 		return "", err
 	}
 

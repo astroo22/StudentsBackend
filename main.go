@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"students/auth"
 	"students/handlers"
+	"students/logger"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -16,15 +17,10 @@ var log = logrus.New()
 
 func main() {
 
-	// HEY... LISTEN!: comment out this section if not on prod
-	logFile, err := os.OpenFile("/var/log/backend.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatal("Failed to open log file:", err)
-	}
-	log.SetOutput(logFile)
+	logger.Init()
 
 	fmt.Println("HEREEE WE GOOOOOO")
-	err = auth.LoadSecretKey()
+	err := auth.LoadSecretKey()
 	if err != nil {
 		return
 	}
