@@ -41,7 +41,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		if strings.Contains(err.Error(), "hash") {
-			http.Error(w, `{"errorType": "IncorrectPassword", "message": "Incorrect Password"}`, http.StatusUnauthorized)
+			http.Error(w, `{"errorType": "IncorrectPassword", "message": "Invalid username or password"}`, http.StatusUnauthorized)
 		} else {
 			http.Error(w, `{"errorType": "General", "message": "Unexpected Error"}`, http.StatusInternalServerError)
 		}

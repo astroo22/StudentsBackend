@@ -42,6 +42,7 @@ func CreateClass(teachingGrade int, professorID string, subject string, roster [
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Println(" err : ", err)
+		fmt.Println(err)
 	}
 	defer db.Close()
 	_, err = db.Exec(insertStatement, class.ClassID, class.TeachingGrade, class.ProfessorID, class.Subject, pq.Array(class.Roster))

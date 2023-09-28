@@ -97,7 +97,8 @@ func newSchool(operationID string, studentsPerGrade int, ownerID, schoolName str
 		classesList   []string
 		updateMessage string
 	)
-
+	schoolID := uuid.New().String()
+	fmt.Println("hit1")
 	for i := 1; i <= 12; i++ {
 		stus, profs, classes, rcs, err := GenerateData(studentsPerGrade, i)
 		if err != nil {
@@ -110,11 +111,8 @@ func newSchool(operationID string, studentsPerGrade int, ownerID, schoolName str
 		updateMessage = fmt.Sprintf("Generating grade: %d", i)
 		UpdateOperationStatus(operationID, updateMessage, nil)
 	}
-	UpdateOperationStatus(operationID, "Uploading Data...", nil)
-	err := BatchUploadData(roster, profList, classList, reportCardList, nil)
-	if err != nil {
-		return school, err
-	}
+	fmt.Println("hit2")
+	fmt.Println("hit3")
 	for _, stu := range roster {
 		studentList = append(studentList, stu.StudentID)
 	}
@@ -124,11 +122,19 @@ func newSchool(operationID string, studentsPerGrade int, ownerID, schoolName str
 	for _, class := range classList {
 		classesList = append(classesList, class.ClassID)
 	}
+	fmt.Println("hit4")
 	UpdateOperationStatus(operationID, "Compiling Data...", nil)
-	school, err = CreateSchool(schoolName, ownerID, professorList, classesList, studentList)
+	school, err := CreateSchool(schoolID, schoolName, ownerID, professorList, classesList, studentList)
 	if err != nil {
 		return school, err
 	}
+	UpdateOperationStatus(operationID, "Uploading Data...", nil)
+	avg_gpa, err := BatchUploadData(schoolID, operationID, roster, profList, classList, reportCardList, nil)
+	if err != nil {
+		return school, err
+	}
+	school.AvgGPA = avg_gpa
+	fmt.Println("hit5")
 	return school, nil
 }
 
@@ -165,10 +171,13 @@ func newSchool(operationID string, studentsPerGrade int, ownerID, schoolName str
 // 	return nil
 // }
 
-func BatchUploadData(studentList []Student, profs []Professor, classes []Class, reportCards []ReportCard, err error) error {
+func BatchUploadData(schoolID, operationID string, studentList []Student, profs []Professor, classes []Class, reportCards []ReportCard, err error) (float64, error) {
 	if err != nil {
-		return err
+		fmt.Println(err)
+		return 0, err
 	}
+
+	UpdateOperationStatus(operationID, "Compiling report card data...", nil)
 	// set avg gpas also grab studentids
 	for i, student := range studentList {
 		//roster = append(roster, student.StudentID)
@@ -179,30 +188,73 @@ func BatchUploadData(studentList []Student, profs []Professor, classes []Class, 
 			}
 		}
 	}
-
+	fmt.Println("batch1")
+	UpdateOperationStatus(operationID, "Uploading Student Data...", nil)
 	// upload as batch
-	err = CreateNewStudents(studentList)
+	err = CreateNewStudents(schoolID, studentList)
 	if err != nil {
-		return err
+		return 0, err
 	}
+	fmt.Println("batch2")
 	fmt.Println("students successfully created")
+	UpdateOperationStatus(operationID, "Uploading Report Card Data...", nil)
 	err = CreateReportCards(reportCards)
 	if err != nil {
-		return err
+		return 0, err
 	}
+	fmt.Println("batch3")
 	fmt.Println("report cards successfully created")
-	err = CreateProfessors(profs)
+	UpdateOperationStatus(operationID, "Uploading Professor Data...", nil)
+	err = CreateProfessors(schoolID, profs)
 	if err != nil {
-		return err
+		fmt.Println(err)
+		return 0, err
+	}
+	fmt.Println("batch4")
+	fmt.Println("professors successfully created")
+	UpdateOperationStatus(operationID, "Uploading Class Data...", nil)
+	err = CreateNewClasses(classes)
+	if err != nil {
+		fmt.Println(err)
+		return 0, err
 	}
 
 	// UPDATING DATA SHOULD BE MOVED
 	// update classlists of professors
+	// ~~~~~~~~~
+	// THIS was probably removed due to performance issues however I don't think the classlists are being set
+	// so this breaks everything the classlists seem to not be connected in the db. AND if the classlist
+	// cant produce the related stuents in the list then it cant grab the db information needed to update the avg
+	// ~~~~~~~~~
+	UpdateOperationStatus(operationID, "Compiling school averages...", nil)
+	err = UpdateProfessorsClassList(classes)
+	if err != nil {
+		fmt.Println(err)
+		return 0, err
+	}
+	// update class Avgs
+	// err = UpdateClassAvgs(classes)
+	// if err != nil {
+	// 	return err
+	// }
+	// return nil
+	schoolAvg, err := UpdateSchoolAvg(schoolID)
+	if err != nil {
+		fmt.Println(err)
+		return 0, err
+	}
+	fmt.Println(schoolAvg)
+
+	// I dont yet know how performant this I may not want it here.
+	err = UpdateSchoolRankings()
+	if err != nil {
+		return 0, err
+	}
 
 	fmt.Println("professors successfully created")
-	fmt.Printf("Generated: %d students, %d report cards, %d professors and %d classes", len(studentList), len(reportCards), len(profs), len(classes))
+	fmt.Printf("Generated: %d students, %d report cards, %d professors and %d classes with an Average GPA of: %d", len(studentList), len(reportCards), len(profs), len(classes), schoolAvg)
 	fmt.Println("")
-	return nil
+	return schoolAvg, nil
 }
 
 // func RunTelemetry(classes []Class) error {
@@ -220,6 +272,7 @@ func BatchUploadData(studentList []Student, profs []Professor, classes []Class, 
 
 // GenerateTestData:
 func GenerateData(numStutotal int, grade int) ([]Student, []Professor, []Class, []ReportCard, error) {
+	fmt.Printf("generating data for grade %v", grade)
 	studentList, err := GenerateStudents(numStutotal, grade)
 	if err != nil {
 		return nil, nil, nil, nil, err
@@ -232,15 +285,9 @@ func GenerateData(numStutotal int, grade int) ([]Student, []Professor, []Class, 
 	for _, student := range studentList {
 		studentIDs = append(studentIDs, student.StudentID)
 	}
-	var classes []Class
-	classNames := [5]string{"math", "science", "english", "physicaled", "lunch"}
-
-	for k, prof := range profs {
-		class, err := CreateClass(grade, prof.ProfessorID, classNames[k], studentIDs)
-		if err != nil {
-			return nil, nil, nil, nil, err
-		}
-		classes = append(classes, class)
+	classes, err := GenerateClasses(profs, studentIDs, grade)
+	if err != nil {
+		return nil, nil, nil, nil, err
 	}
 	// generate report cards
 	reportCards, err := GenerateReportCards(studentList, classes)
@@ -248,8 +295,24 @@ func GenerateData(numStutotal int, grade int) ([]Student, []Professor, []Class, 
 		fmt.Printf("generation in report cards %v", err)
 		return nil, nil, nil, nil, err
 	}
-
+	fmt.Printf("generated data for grade %v", grade)
 	return studentList, profs, classes, reportCards, nil
+}
+
+func GenerateClasses(professors []Professor, studentIDs []string, grade int) ([]Class, error) {
+	var classes []Class
+	classNames := [5]string{"math", "science", "english", "physicaled", "lunch"}
+	for k, prof := range professors {
+		class := Class{
+			ClassID:       uuid.New().String(),
+			TeachingGrade: grade,
+			ProfessorID:   prof.ProfessorID,
+			Subject:       classNames[k],
+			Roster:        studentIDs,
+		}
+		classes = append(classes, class)
+	}
+	return classes, nil
 }
 
 // STUDENTS
@@ -267,6 +330,10 @@ func GenerateStudents(numStudents int, grade int) ([]Student, error) {
 		// Generate a random date of birth
 		currentYearInCalendar := time.Now().Year()
 		dob := time.Date((currentYearInCalendar - age), time.Month(rng.Intn(12)+1), rng.Intn(28)+1, 0, 0, 0, 0, time.UTC)
+		if i == 1 {
+			fmt.Printf("dob check: %v", dob)
+			fmt.Println()
+		}
 		enrolled := rng.Intn(2) == 1
 
 		student := Student{
@@ -284,16 +351,42 @@ func GenerateStudents(numStudents int, grade int) ([]Student, error) {
 	return studentList, nil
 }
 
-// CreateNewStudents uses batch processing to commit all in one db hit to be more performant
-func CreateNewStudents(students []Student) error {
-	return createNewStudents(students)
+func CreateNewClasses(classes []Class) error {
+	placeholders := make([]string, 0, len(classes))
+	batchVals := make([]interface{}, 0, len(classes)*5)
+	for n, class := range classes {
+		placeholders = append(placeholders, fmt.Sprintf("($%d,$%d,$%d,$%d,$%d)", n*5+1, n*5+2, n*5+3, n*5+4, n*5+5))
+		batchVals = append(batchVals, class.ClassID)
+		batchVals = append(batchVals, class.TeachingGrade)
+		batchVals = append(batchVals, class.ProfessorID)
+		batchVals = append(batchVals, class.Subject)
+		batchVals = append(batchVals, pq.Array(class.Roster))
+	}
+	insertStatement := fmt.Sprintf(`INSERT INTO Classes("class_id","teaching_grade","professor_id","subject","roster") values %s`, strings.Join(placeholders, ","))
+	db, err := sqlgeneric.Init()
+	if err != nil {
+		log.Println(" err : ", err)
+		fmt.Println(err)
+	}
+	defer db.Close()
+	_, err = db.Exec(insertStatement, batchVals...)
+	if err != nil {
+		return err
+	}
+	return nil
 }
-func createNewStudents(students []Student) error {
+
+// CreateNewStudents uses batch processing to commit all in one db hit to be more performant
+func CreateNewStudents(schoolID string, students []Student) error {
+	return createNewStudents(schoolID, students)
+}
+func createNewStudents(schoolID string, students []Student) error {
 	placeholders := make([]string, 0, len(students))
-	batchVals := make([]interface{}, 0, len(students)*8)
+	batchVals := make([]interface{}, 0, len(students)*9)
 	for n, student := range students {
-		placeholders = append(placeholders, fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)", n*8+1, n*8+2, n*8+3, n*8+4, n*8+5, n*8+6, n*8+7, n*8+8))
+		placeholders = append(placeholders, fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)", n*9+1, n*9+2, n*9+3, n*9+4, n*9+5, n*9+6, n*9+7, n*9+8, n*9+9))
 		batchVals = append(batchVals, student.StudentID)
+		batchVals = append(batchVals, schoolID)
 		batchVals = append(batchVals, student.Name)
 		batchVals = append(batchVals, student.CurrentYear)
 		batchVals = append(batchVals, student.GraduationYear)
@@ -302,14 +395,16 @@ func createNewStudents(students []Student) error {
 		batchVals = append(batchVals, student.Dob)
 		batchVals = append(batchVals, student.Enrolled)
 	}
-	insertStatement := fmt.Sprintf(`INSERT into STUDENTS("student_id","name","current_year","graduation_year","avg_gpa","age","dob","enrolled") values %s`, strings.Join(placeholders, ","))
+	insertStatement := fmt.Sprintf(`INSERT into STUDENTS("student_id","school_id","name","current_year","graduation_year","avg_gpa","age","dob","enrolled") values %s`, strings.Join(placeholders, ","))
 	db, err := sqlgeneric.Init()
 	if err != nil {
+		fmt.Println(err)
 		log.Println("err %w", err)
 	}
 	defer db.Close()
 	_, err = db.Exec(insertStatement, batchVals...)
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 	return nil
@@ -392,25 +487,24 @@ func generateProfessors(numProfs int) ([]Professor, error) {
 	return profList, nil
 }
 
-func CreateProfessors(profs []Professor) error {
-	return createProfessors(profs)
+func CreateProfessors(schoolID string, profs []Professor) error {
+	return createProfessors(schoolID, profs)
 }
-func createProfessors(profs []Professor) error {
+func createProfessors(schoolID string, profs []Professor) error {
 	var placeholders []string
 	var values []interface{}
 	for i, prof := range profs {
-		placeholders = append(placeholders, fmt.Sprintf("($%d, $%d)", (2*i)+1, (2*i)+2))
-		values = append(values, prof.ProfessorID, prof.Name)
+		placeholders = append(placeholders, fmt.Sprintf("($%d, $%d, $%d)", (3*i)+1, (3*i)+2, (3*i)+3))
+		values = append(values, prof.ProfessorID, schoolID, prof.Name)
 	}
 
-	insertStatement := fmt.Sprintf(`INSERT INTO Professors("professor_id","name") VALUES %s`, strings.Join(placeholders, ", "))
+	insertStatement := fmt.Sprintf(`INSERT INTO Professors("professor_id","school_id","name") VALUES %s`, strings.Join(placeholders, ", "))
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Println(" err : ", err)
 		return err
 	}
 	defer db.Close()
-
 	_, err = db.Exec(insertStatement, values...)
 	if err != nil {
 		return err
@@ -440,37 +534,3 @@ func deleteReportCards(students []Student) error {
 	}
 	return nil
 }
-
-// func DeleteTables() error {
-// 	return deleteTables()
-// }
-// func deleteTables() error {
-// 	var (
-// 		students    = `DELETE FROM Students`
-// 		reportCards = `DELETE FROM ReportCards`
-// 		classes     = `DELETE FROM Classes`
-// 		professors  = `DELETE FROM Professors`
-// 	)
-
-// 	db, err := sqlgeneric.Init()
-// 	if err != nil {
-// 		log.Println(" err : ", err)
-// 	}
-// 	_, err = db.Exec(students)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	_, err = db.Exec(reportCards)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	_, err = db.Exec(classes)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	_, err = db.Exec(professors)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }

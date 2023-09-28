@@ -160,10 +160,12 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	ownerID := vars["owner_id"]
 	userID := r.Context().Value("user_id")
+
 	if userID == nil {
 		// Handle error: no user ID in context
 		w.WriteHeader(http.StatusUnauthorized)
 		fmt.Fprint(w, "Please log in")
+		fmt.Println("not logged in")
 		return
 	}
 	if ownerID != userID {
@@ -173,12 +175,14 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 		}).Warn("attempted delete of non owned user")
 		w.WriteHeader(http.StatusForbidden)
 		fmt.Fprint(w, "non authorized delete attempt of unowned user")
+		fmt.Println("possible malicious delete detected")
 		return
 	}
 	err := students.DeleteUser(ownerID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error deleting user")
+		fmt.Println(err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

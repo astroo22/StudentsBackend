@@ -16,6 +16,7 @@ func Test_SchoolCrud(t *testing.T) {
 		classList []string
 		profList  []string
 		ownerID   = uuid.New().String()
+		schoolID  = uuid.New().String()
 	)
 
 	//students going to update add rick then remove him
@@ -89,7 +90,7 @@ func Test_SchoolCrud(t *testing.T) {
 	}
 	//classlist
 	classList = append(classList, class1.ClassID, class2.ClassID, class4.ClassID, class5.ClassID)
-	school, err := CreateSchool("PLUS ULTRA ACADEMY test1", ownerID, profList, classList, roster)
+	school, err := CreateSchool(schoolID, "PLUS ULTRA ACADEMY test1", ownerID, profList, classList, roster)
 	if err != nil {
 		t.Error(err)
 	}

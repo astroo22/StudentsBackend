@@ -156,6 +156,8 @@ func GetBestProfessorsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if bestProfessors[0].StudentAvg == 0 {
+		// might need a thread here but adding a thread means I need to add feedback at the front.
+		// need some prints to see execution.
 		fmt.Println("Found values needing update for professors. Running updates!")
 		var ids []string
 

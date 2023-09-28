@@ -8,7 +8,6 @@ import (
 	"strings"
 	"students/sqlgeneric"
 
-	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
@@ -44,27 +43,29 @@ type UpdateSchoolOptions struct {
 	Enrollment_change_ids []string `json:"enrollment_change_ids"`
 }
 
-func CreateSchool(name, ownerID string, professorList []string, classList []string, studentList []string) (School, error) {
-	return createSchool(name, ownerID, professorList, classList, studentList)
+func CreateSchool(schoolID, name, ownerID string, professorList []string, classList []string, studentList []string) (School, error) {
+	return createSchool(schoolID, name, ownerID, professorList, classList, studentList)
 }
-func createSchool(name, ownerID string, professorList []string, classList []string, studentList []string) (School, error) {
+func createSchool(schoolID, name, ownerID string, professorList []string, classList []string, studentList []string) (School, error) {
 	// this needs to do a check of where I store ownerID's in the future and make sure it exists
 	// if ownerID exists continue if not return.
-	schoolID := uuid.New().String()
 	insertStatement := `INSERT INTO Schools("school_id","owner_id","school_name","professor_list","class_list","student_list") VALUES($1,$2,$3,$4,$5,$6)`
 	db, err := sqlgeneric.Init()
 	if err != nil {
+		fmt.Println(err)
 		log.Println(" err : ", err)
 		return School{}, err
 	}
 	defer db.Close()
 	_, err = db.Exec(insertStatement, schoolID, ownerID, name, pq.Array(professorList), pq.Array(classList), pq.Array(studentList))
 	if err != nil {
+		fmt.Println(err)
 		return School{}, err
 	}
 
 	schoolAvg, err := UpdateSchoolAvg(schoolID)
 	if err != nil {
+		fmt.Println(err)
 		return School{}, err
 	}
 
@@ -93,6 +94,7 @@ func getSchool(schoolID string) (School, error) {
 	getStatement := `SELECT school_id, school_name, avg_gpa, ranking, professor_list, class_list, student_list FROM Schools WHERE school_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
+		fmt.Println(err)
 		log.Printf(" err : %v", err)
 	}
 	defer db.Close()
@@ -110,15 +112,18 @@ func getAllSchools() ([]School, error) {
 	getStatement := `SELECT school_id, school_name, avg_gpa, ranking, professor_list,class_list,student_list FROM Schools`
 	db, err := sqlgeneric.Init()
 	if err != nil {
+		fmt.Println(err)
 		log.Printf(" err : %v", err)
 	}
 	defer db.Close()
 	ret, err := db.Query(getStatement)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	schools, err := ScanSchools(ret)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	return schools, err
@@ -132,7 +137,9 @@ func getAllSchoolsForUser(ownerID string) ([]School, error) {
 	getStatement := `SELECT school_id, school_name, avg_gpa, ranking, professor_list,class_list,student_list FROM Schools WHERE owner_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
+		fmt.Println(err)
 		log.Printf(" err : %v", err)
+		return nil, err
 	}
 	defer db.Close()
 	ret, err := db.Query(getStatement, ownerID)
@@ -178,7 +185,9 @@ func getAllSchoolsForUser(ownerID string) ([]School, error) {
 func UpdateSchoolRankings() error {
 	db, err := sqlgeneric.Init()
 	if err != nil {
+		fmt.Println(err)
 		log.Printf(" err : %v", err)
+		return err
 	}
 	defer db.Close()
 
@@ -214,7 +223,9 @@ func getClassesForSchool(schoolID string) ([]Class, error) {
     `
 	db, err := sqlgeneric.Init()
 	if err != nil {
+		fmt.Println(err)
 		log.Printf(" err : %v", err)
+		return nil, err
 	}
 	defer db.Close()
 	rows, err := db.Query(query, schoolID)
@@ -232,23 +243,27 @@ func GetStudentsForSchool(schoolID string) ([]Student, error) {
 }
 func getStudentsForSchool(schoolID string) ([]Student, error) {
 	query := `
-		SELECT st.*
+		SELECT st.student_id, st.name,st.current_year,st.graduation_year, st.avg_gpa, st.age,st.dob,st.enrolled
 		FROM schools s, unnest(s.student_list) sl, students st
 		WHERE s.school_id = $1 and sl = st.student_id
 		ORDER BY st.avg_gpa DESC
 	`
 	db, err := sqlgeneric.Init()
 	if err != nil {
+		fmt.Println(err)
 		log.Printf(" err : %v", err)
+		return nil, err
 	}
 	defer db.Close()
 	rows, err := db.Query(query, schoolID)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 
 	students, err := ScanStudents(rows)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	return students, nil
@@ -296,11 +311,14 @@ func (opts UpdateSchoolOptions) updateSchool() error {
 	SQL += " WHERE school_id = $1"
 	db, err := sqlgeneric.Init()
 	if err != nil {
+		fmt.Println(err)
 		log.Println(" err : ", err)
+		return nil
 	}
 	defer db.Close()
 	_, err = db.Exec(SQL, values...)
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 	return nil

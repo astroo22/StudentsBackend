@@ -83,7 +83,9 @@ func getUser(ownerID string) (User, error) {
 	getStatement := `SELECT * FROM Users WHERE owner_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
+		fmt.Println(err)
 		log.Printf(" err : %v", err)
+		return User{}, err
 	}
 	defer db.Close()
 	user, err := ScanUser(db.QueryRow(getStatement, ownerID))
@@ -99,7 +101,9 @@ func getUserByUserName(userName string) (User, error) {
 	getStatement := `SELECT * FROM Users WHERE user_name = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
+		fmt.Println(err)
 		log.Printf(" err : %v", err)
+		return User{}, err
 	}
 	defer db.Close()
 	user, err := ScanUser(db.QueryRow(getStatement, userName))

@@ -73,10 +73,12 @@ func GetBestProfessors(schoolID string) ([]Professor, error) {
 func getBestProfessors(schoolID string) ([]Professor, error) {
 	school, err := GetSchool(schoolID)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	db, err := sqlgeneric.Init()
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	defer db.Close()
@@ -88,14 +90,16 @@ func getBestProfessors(schoolID string) ([]Professor, error) {
 		batchVals = append(batchVals, school.ProfessorList[i])
 	}
 
-	getStatement := fmt.Sprintf(`SELECT * FROM Professors WHERE professor_id IN (%s) ORDER BY student_avg DESC`, strings.Join(placeholders, ","))
+	getStatement := fmt.Sprintf(`SELECT professor_id, name, student_avg, class_list FROM Professors WHERE professor_id IN (%s) ORDER BY student_avg DESC`, strings.Join(placeholders, ","))
 	rows, err := db.Query(getStatement, batchVals...)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	defer rows.Close()
 	bestProfessors, err := ScanProfessors(rows)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 
@@ -130,10 +134,14 @@ func updateProfessorStudentAvg(profID string) (float64, error) {
 	return studentAvg, nil
 }
 
+// might need to spin off thread here ~
+// this is pretty fast now not worth a new thread since schools are limited in size
 func UpdateProfessorsStudentAvgs(professors []string) error {
 	return updateProfessorsStudentAvgs(professors)
 }
 func updateProfessorsStudentAvgs(professors []string) error {
+	fmt.Printf("hit update professors for: %v", professors)
+	fmt.Println()
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		return err
@@ -143,18 +151,21 @@ func updateProfessorsStudentAvgs(professors []string) error {
 	for i, val := range professors {
 		result[i] = strings.ReplaceAll(val, ",", " ")
 	}
-	fmt.Println(len(result))
-	query := `UPDATE Professors SET student_avg = (
-        SELECT COALESCE(AVG(class_avg),0)
-        FROM Classes 
-        WHERE class_id =ANY(Professors.class_list) 
-    )
+	//fmt.Println(len(result))
+	query := `UPDATE Professors 
+	SET student_avg = (
+		SELECT COALESCE(AVG(class_avg), 0)
+		FROM Classes 
+		WHERE class_id = ANY(Professors.class_list) 
+	)
 	WHERE professor_id = ANY($1)`
 
 	_, err = db.Exec(query, pq.Array(result))
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
+	fmt.Println("finished update for professors")
 	return nil
 }
 func UpdateSchoolAvg(schoolID string) (float64, error) {
@@ -173,10 +184,11 @@ func UpdateSchoolAvg(schoolID string) (float64, error) {
 		schoolAvg += class.ClassAvg
 	}
 	schoolAvg = math.Round(schoolAvg/float64(len(classes))*100) / 100
-	fmt.Println(schoolAvg)
+	//fmt.Println(schoolAvg)
 	updateQuery := `UPDATE Schools SET avg_gpa = $1 WHERE school_id = $2`
 	db, err := sqlgeneric.Init()
 	if err != nil {
+		fmt.Println(err)
 		log.Printf(" err : %v", err)
 		return 0, err
 	}
@@ -214,7 +226,7 @@ func updateClassAvgs(schoolID string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println(reportCards)
+		//fmt.Println(reportCards)
 		if len(reportCards) == 0 {
 			return fmt.Errorf("no report cards found")
 		}
@@ -239,7 +251,7 @@ func updateClassAvgs(schoolID string) error {
 			numStudents++
 		}
 		classAvg := math.Round(float64(totalGrade)/float64(numStudents)) / 100.0
-		fmt.Println(classAvg)
+		//fmt.Println(classAvg)
 		//classAvg = math.Round(classAvg*100) / 100
 		// Update the class record with the calculated class average
 		query := `UPDATE Classes SET class_avg = $1 WHERE class_id = $2`

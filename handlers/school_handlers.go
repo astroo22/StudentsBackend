@@ -12,8 +12,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//decided no create school handler
-
 // GetAllSchools
 func GetAllSchools(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("hit get all schools")
@@ -40,7 +38,11 @@ func GetClassesForSchoolHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("hit get all classes for school")
 	vars := mux.Vars(r)
 	schoolID := vars["school_id"]
-
+	if len(schoolID) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, "Invalid request payload")
+		return
+	}
 	classes, err := students.GetClassesForSchool(schoolID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -59,7 +61,11 @@ func GetStudentsForSchoolHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("hit get students for school")
 	vars := mux.Vars(r)
 	schoolID := vars["school_id"]
-
+	if len(schoolID) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, "Invalid request payload")
+		return
+	}
 	students, err := students.GetStudentsForSchool(schoolID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -157,6 +163,7 @@ func UpdateSchoolHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	type SchoolData struct {
 		OwnerID               string   `json:"owner_id"`
+		SchoolName            string   `json:"name"`
 		Enrollment_change_ids []string `json:"enrollment_change_ids"`
 	}
 	var data SchoolData
@@ -164,19 +171,8 @@ func UpdateSchoolHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		fmt.Fprint(w, "Invalid request payload")
-		fmt.Println("hit")
 		return
 	}
-	fmt.Println(data.OwnerID)
-
-	//disable this while dev
-	// ownerID := r.FormValue("owner_id")
-	// if len(ownerID) == 0 {
-	// 	w.WriteHeader(http.StatusBadRequest)
-	// 	fmt.Fprint(w, "Invalid request payload")
-	// 	fmt.Println("hit")
-	// 	return
-	// }
 	userID := r.Context().Value("user_id")
 	if userID == nil {
 		// Handle error: no user ID in context
@@ -194,7 +190,6 @@ func UpdateSchoolHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "non authorized get attempt of unowned objects")
 		return
 	}
-
 	opts := students.UpdateSchoolOptions{
 		SchoolID: schoolID,
 	}
@@ -202,7 +197,6 @@ func UpdateSchoolHandler(w http.ResponseWriter, r *http.Request) {
 		err = students.FlipEnrollmentStatus(data.Enrollment_change_ids)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
-			fmt.Println("flip")
 			fmt.Println(err)
 			return
 		}
@@ -217,8 +211,9 @@ func UpdateSchoolHandler(w http.ResponseWriter, r *http.Request) {
 		}()
 
 	}
-	if len(opts.SchoolName) > 0 {
-		fmt.Println(opts)
+	if len(data.SchoolName) > 0 {
+		opts.SchoolName = data.SchoolName
+		//fmt.Println(opts)
 		err = opts.UpdateSchool()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -349,6 +344,7 @@ func DeleteSchoolHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	err = students.DeleteSchool(schoolID)
 	if err != nil {
+		fmt.Println(err)
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprint(w, "school not found")
 		return

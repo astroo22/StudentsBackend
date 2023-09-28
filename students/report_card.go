@@ -66,7 +66,7 @@ func GetReportCard(studentID string) (ReportCard, error) {
 	return getReportCard(studentID)
 }
 func getReportCard(studentID string) (ReportCard, error) {
-	getStatement := `SELECT * FROM ReportCards WHERE student_id = $1`
+	getStatement := `SELECT student_id, math, science, english, physical_ed, lunch, class_list FROM ReportCards WHERE student_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Println(" err : ", err)
@@ -93,7 +93,7 @@ func getReportCards(studentIDs []string) ([]ReportCard, error) {
 		batchVals = append(batchVals, studentIDs[i])
 	}
 
-	getStatement := fmt.Sprintf(`SELECT * FROM ReportCards WHERE student_id IN (%s)`, strings.Join(placeholders, ","))
+	getStatement := fmt.Sprintf(`SELECT student_id, math, science, english, physical_ed, lunch, class_list FROM ReportCards WHERE student_id IN (%s)`, strings.Join(placeholders, ","))
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Println(err)
@@ -126,9 +126,10 @@ func getReportCardsOfEnrolled(studentIDs []string) ([]ReportCard, error) {
 		batchVals = append(batchVals, studentIDs[i])
 	}
 
-	getStatement := fmt.Sprintf(`SELECT ReportCards.* FROM ReportCards 
-		JOIN Students ON ReportCards.student_id = Students.student_id 
-		WHERE ReportCards.student_id IN (%s) AND Students.enrolled = true`, strings.Join(placeholders, ","))
+	getStatement := fmt.Sprintf(`SELECT ReportCards.student_id, ReportCards.math, ReportCards.science, ReportCards.english, ReportCards.physical_ed, ReportCards.lunch, ReportCards.class_list FROM ReportCards 
+    JOIN Students ON ReportCards.student_id = Students.student_id 
+    WHERE ReportCards.student_id IN (%s) AND Students.enrolled = true`, strings.Join(placeholders, ","))
+
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Println(err)

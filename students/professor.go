@@ -53,16 +53,19 @@ func GetProfessor(professorID string) (Professor, error) {
 	return getProfessor(professorID)
 }
 func getProfessor(professorID string) (Professor, error) {
-	getStatement := `SELECT * FROM Professors WHERE professor_id = $1`
+	getStatement := `SELECT professor_id, name, student_avg, class_list FROM Professors WHERE professor_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
+		fmt.Println(err)
 		log.Printf(" err : %v", err)
+		return Professor{}, err
 	}
 	defer db.Close()
 	prof, err := ScanProf(db.QueryRow(getStatement, professorID))
 	if err != nil {
 		return Professor{}, err
 	}
+
 	return prof, nil
 }
 
