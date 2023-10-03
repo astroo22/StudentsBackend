@@ -61,7 +61,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("created user: %v", ret)
+	//fmt.Printf("created user: %v", ret)
 	fmt.Println()
 	w.Write(ret)
 }
