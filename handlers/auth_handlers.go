@@ -34,13 +34,14 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("empty request")
 		return
 	}
-	fmt.Printf("got user: %v", user)
-	fmt.Println()
 	// Verify the user's credentials
 	authenticated, userInfo, err := auth.AuthenticateUser(user.UserName, user.Password)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
-		if strings.Contains(err.Error(), "hash") {
+		if strings.Contains(err.Error(), "no rows in result set") {
+			http.Error(w, `{"errorType": "Unauthorized", "message": "Incorrect Username or Password"}`, http.StatusUnauthorized)
+			return
+		} else if strings.Contains(err.Error(), "hash") {
 			http.Error(w, `{"errorType": "IncorrectPassword", "message": "Invalid username or password"}`, http.StatusUnauthorized)
 		} else {
 			http.Error(w, `{"errorType": "General", "message": "Unexpected Error"}`, http.StatusInternalServerError)
@@ -82,7 +83,6 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	// http.SetCookie(w, cookie)
 
 	// Redirect the user to the homepage
-	// TODO: before setting up amazon need this to be aimed at home
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 

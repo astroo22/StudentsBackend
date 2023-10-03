@@ -26,11 +26,6 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 		return
 	}
-	// TODO: I need to do a check here for usernames that already exist? or I could just not and check the sql error?
-	// checking the sql error would save a request. Will add this feature once this is functional.
-
-	fmt.Println()
-	fmt.Printf("user: %v", user)
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -46,8 +41,14 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	newUser, err := options.CreateNewUser()
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, "Unexpected error creating user")
+		// Check if the error is due to a unique constraint violation
+		if strings.Contains(err.Error(), "unique") || strings.Contains(err.Error(), "duplicate") {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprint(w, "Username or email already exists")
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "Unexpected error creating user")
+		}
 		fmt.Println(err)
 		return
 	}
@@ -59,7 +60,8 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 		return
 	}
-	fmt.Printf("created user: %v", user)
+
+	fmt.Printf("created user: %v", ret)
 	fmt.Println()
 	w.Write(ret)
 }
