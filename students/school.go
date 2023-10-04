@@ -29,6 +29,7 @@ type UpdateSchoolOptions struct {
 
 	// will update
 	SchoolName string `json:"name"`
+	Avg_gpa    float64
 
 	AddToProfessorList      []string
 	RemoveFromProfessorList []string
@@ -284,10 +285,15 @@ func (opts UpdateSchoolOptions) updateSchool() error {
 	if err != nil {
 		return err
 	}
-
+	fmt.Println("hit update school??")
 	if len(opts.SchoolName) > 0 {
 		SQL += fmt.Sprintf(" school_name = $%d,", i)
 		values = append(values, opts.SchoolName)
+		i++
+	}
+	if opts.Avg_gpa != 0 {
+		SQL += fmt.Sprintf(" avg_gpa = $%d,", i)
+		values = append(values, opts.Avg_gpa)
 		i++
 	}
 	if len(opts.AddToProfessorList) != 0 || len(opts.RemoveFromProfessorList) != 0 {
@@ -316,6 +322,7 @@ func (opts UpdateSchoolOptions) updateSchool() error {
 		return nil
 	}
 	defer db.Close()
+	fmt.Println(SQL)
 	_, err = db.Exec(SQL, values...)
 	if err != nil {
 		fmt.Println(err)

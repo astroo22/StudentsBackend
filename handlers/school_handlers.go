@@ -117,6 +117,8 @@ func GetAllSchoolsForUser(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Invalid request payload")
 		return
 	}
+	// TODO: left the logic here realistically I can add this back in but there is no damage
+	// by leaving it out
 	// userID := r.Context().Value("user_id")
 	// if userID == nil {
 	// 	// Handle error: no user ID in context
@@ -165,6 +167,7 @@ func UpdateSchoolHandler(w http.ResponseWriter, r *http.Request) {
 		OwnerID               string   `json:"owner_id"`
 		SchoolName            string   `json:"name"`
 		Enrollment_change_ids []string `json:"enrollment_change_ids"`
+		New_avg_gpa           float64  `json:"avg_gpa"`
 	}
 	var data SchoolData
 	err := json.NewDecoder(r.Body).Decode(&data)
@@ -190,8 +193,15 @@ func UpdateSchoolHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "non authorized get attempt of unowned objects")
 		return
 	}
+
 	opts := students.UpdateSchoolOptions{
 		SchoolID: schoolID,
+	}
+	fmt.Println("before new avg")
+	if data.New_avg_gpa != 0.0 {
+		opts.Avg_gpa = data.New_avg_gpa
+		fmt.Println("in new avg")
+		fmt.Println(data.New_avg_gpa)
 	}
 	if len(data.Enrollment_change_ids) > 0 {
 		err = students.FlipEnrollmentStatus(data.Enrollment_change_ids)
@@ -200,18 +210,8 @@ func UpdateSchoolHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 			return
 		}
-		go func() {
-			_, err = students.UpdateSchoolAvg(schoolID)
-			if err != nil {
-				fmt.Println("error updating school avg: not normal error")
-				fmt.Println(err)
-				return
-			}
-			fmt.Println("finished avgs")
-		}()
-
 	}
-	if len(data.SchoolName) > 0 {
+	if len(data.SchoolName) > 0 || data.New_avg_gpa != 0.0 {
 		opts.SchoolName = data.SchoolName
 		//fmt.Println(opts)
 		err = opts.UpdateSchool()
