@@ -144,8 +144,6 @@ func (opts UpdateUserOptions) updateUser() error {
 		values = append(values, opts.HashedPassword)
 		i++
 	}
-	// this triggers sometimes unintentionally because of add school and remove school need to be careful
-	// if I decide to add this functionality later.
 	if len(opts.AddSchoolList) != 0 || len(opts.RemoveSchoolList) != 0 {
 		schoolList, err := opts.prepUserSchoolListUpdate()
 		if err != nil {
@@ -188,21 +186,104 @@ func (opts UpdateUserOptions) prepUserSchoolListUpdate() ([]string, error) {
 }
 
 func DeleteUser(ownerID string) error {
-	SQL := `DELETE FROM Users WHERE owner_id = $1`
+	return deleteUser(ownerID)
+}
+
+func deleteUser(ownerID string) error {
 	db, err := sqlgeneric.Init()
 	if err != nil {
-		log.Println(" err : ", err)
-	}
-	defer db.Close()
-	_, err = db.Exec(SQL, ownerID)
-	if err != nil {
+		log.Println("Error initializing database: ", err)
 		return err
 	}
+	defer db.Close()
+
+	// transaction
+	tx, err := db.Begin()
+	if err != nil {
+		log.Println("Error starting transaction: ", err)
+		return err
+	}
+
+	// SQL statements
+	deleteSchools := `DELETE FROM Schools WHERE owner_id = $1`
+
+	deleteStudents := `DELETE FROM Students WHERE school_id IN 
+					(SELECT school_id FROM Schools WHERE owner_id = $1)`
+
+	deleteReportCards := `DELETE FROM ReportCards WHERE student_id IN 
+					(SELECT student_id FROM Students WHERE school_id IN 
+					(SELECT school_id FROM Schools WHERE owner_id = $1))`
+
+	deleteProfessors := `DELETE FROM Professors WHERE school_id IN 
+					(SELECT school_id FROM Schools WHERE owner_id = $1)`
+
+	deleteClasses := `DELETE FROM Classes WHERE professor_id IN 
+					(SELECT professor_id FROM Professors WHERE school_id IN 
+					(SELECT school_id FROM Schools WHERE owner_id = $1))`
+
+	deleteUser := `DELETE FROM Users WHERE owner_id = $1`
+
+	// Execute deletion queries
+	if _, err = tx.Exec(deleteReportCards, ownerID); err != nil {
+		tx.Rollback()
+		log.Println("Error deleting report cards: ", err)
+		return err
+	}
+	if _, err = tx.Exec(deleteStudents, ownerID); err != nil {
+		tx.Rollback()
+		log.Println("Error deleting students: ", err)
+		return err
+	}
+	if _, err = tx.Exec(deleteClasses, ownerID); err != nil {
+		tx.Rollback()
+		log.Println("Error deleting classes: ", err)
+		return err
+	}
+	if _, err = tx.Exec(deleteProfessors, ownerID); err != nil {
+		tx.Rollback()
+		log.Println("Error deleting professors: ", err)
+		return err
+	}
+	if _, err = tx.Exec(deleteSchools, ownerID); err != nil {
+		tx.Rollback()
+		log.Println("Error deleting schools: ", err)
+		return err
+	}
+	if _, err = tx.Exec(deleteUser, ownerID); err != nil {
+		tx.Rollback()
+		log.Println("Error deleting user: ", err)
+		return err
+	}
+
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		log.Println("Error committing transaction: ", err)
+		return err
+	}
+
 	return nil
 }
 
+// func deleteUser(ownerID string) error {
+// 	SQL := `DELETE FROM Users WHERE owner_id = $1`
+// 	db, err := sqlgeneric.Init()
+// 	if err != nil {
+// 		log.Println(" err : ", err)
+// 	}
+// 	defer db.Close()
+// 	_, err = db.Exec(SQL, ownerID)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
+
 // SCANS
 func ScanUser(row *sql.Row) (User, error) {
+	return scanUser(row)
+}
+
+func scanUser(row *sql.Row) (User, error) {
 	var (
 		user       = User{}
 		schoolList sql.NullString
@@ -225,34 +306,3 @@ func ScanUser(row *sql.Row) (User, error) {
 	}
 	return user, nil
 }
-
-// func scanUsers(rows *sql.Rows) ([]User, error) {
-// 	var users []User
-// 	defer rows.Close()
-
-// 	for rows.Next() {
-// 		var (
-// 			user       = User{}
-// 			schoolList sql.NullString
-// 		)
-// 		err := rows.Scan(
-// 			&user.OwnerID,
-// 			&user.UserName,
-// 			&user.Email,
-// 			&user.HashedPassword,
-// 			&schoolList)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		if schoolList.Valid {
-// 			user.SchoolList = strings.Split(schoolList.String, ",")
-// 		}
-// 		users = append(users, user)
-// 	}
-
-// 	if err := rows.Err(); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return users, nil
-// }

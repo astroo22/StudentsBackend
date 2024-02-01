@@ -98,7 +98,6 @@ func newSchool(operationID string, studentsPerGrade int, ownerID, schoolName str
 		updateMessage string
 	)
 	schoolID := uuid.New().String()
-	fmt.Println("hit1")
 	for i := 1; i <= 12; i++ {
 		stus, profs, classes, rcs, err := GenerateData(studentsPerGrade, i)
 		if err != nil {
@@ -111,8 +110,6 @@ func newSchool(operationID string, studentsPerGrade int, ownerID, schoolName str
 		updateMessage = fmt.Sprintf("Generating grade: %d", i)
 		UpdateOperationStatus(operationID, updateMessage, nil)
 	}
-	fmt.Println("hit2")
-	fmt.Println("hit3")
 	for _, stu := range roster {
 		studentList = append(studentList, stu.StudentID)
 	}
@@ -137,39 +134,6 @@ func newSchool(operationID string, studentsPerGrade int, ownerID, schoolName str
 	fmt.Println("hit5")
 	return school, nil
 }
-
-// func AdminGenerateTestSchools() error {
-// 	var (
-// 		owernerID   = "The New Vibe"
-// 		schoolName1 = "Busta Rhymes Academy"
-// 		schoolName2 = "Rick and Morty Vindicators 4"
-// 		schoolName3 = "PLUS ULTRA ACADEMY"
-// 		schoolName4 = "Xavier Institue for Higher Learning"
-// 		schoolName5 = "Institue for UnderWater Basket Weaving"
-// 		stdPerGrade = 20
-// 	)
-// 	_, err := NewSchool(stdPerGrade, owernerID, schoolName1)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	_, err = NewSchool(stdPerGrade, owernerID, schoolName2)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	_, err = NewSchool(stdPerGrade, owernerID, schoolName3)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	_, err = NewSchool(stdPerGrade, owernerID, schoolName4)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	_, err = NewSchool(stdPerGrade, owernerID, schoolName5)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
 
 func BatchUploadData(schoolID, operationID string, studentList []Student, profs []Professor, classes []Class, reportCards []ReportCard, err error) (float64, error) {
 	if err != nil {
@@ -219,25 +183,12 @@ func BatchUploadData(schoolID, operationID string, studentList []Student, profs 
 		return 0, err
 	}
 
-	// UPDATING DATA SHOULD BE MOVED
-	// update classlists of professors
-	// ~~~~~~~~~
-	// THIS was probably removed due to performance issues however I don't think the classlists are being set
-	// so this breaks everything the classlists seem to not be connected in the db. AND if the classlist
-	// cant produce the related stuents in the list then it cant grab the db information needed to update the avg
-	// ~~~~~~~~~
 	UpdateOperationStatus(operationID, "Compiling school averages...", nil)
 	err = UpdateProfessorsClassList(classes)
 	if err != nil {
 		fmt.Println(err)
 		return 0, err
 	}
-	// update class Avgs
-	// err = UpdateClassAvgs(classes)
-	// if err != nil {
-	// 	return err
-	// }
-	// return nil
 	schoolAvg, err := UpdateSchoolAvg(schoolID)
 	if err != nil {
 		fmt.Println(err)
@@ -252,23 +203,10 @@ func BatchUploadData(schoolID, operationID string, studentList []Student, profs 
 	}
 
 	fmt.Println("professors successfully created")
-	fmt.Printf("Generated: %d students, %d report cards, %d professors and %d classes with an Average GPA of: %d", len(studentList), len(reportCards), len(profs), len(classes), schoolAvg)
+	fmt.Printf("Generated: %d students, %d report cards, %d professors and %d classes with an Average GPA of: %f", len(studentList), len(reportCards), len(profs), len(classes), schoolAvg)
 	fmt.Println("")
 	return schoolAvg, nil
 }
-
-// func RunTelemetry(classes []Class) error {
-// 	err := UpdateProfessorsClassList(classes)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	// update class Avgs
-// 	err = UpdateClassAvgs(classes)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
 
 // GenerateTestData:
 func GenerateData(numStutotal int, grade int) ([]Student, []Professor, []Class, []ReportCard, error) {
@@ -330,10 +268,6 @@ func GenerateStudents(numStudents int, grade int) ([]Student, error) {
 		// Generate a random date of birth
 		currentYearInCalendar := time.Now().Year()
 		dob := time.Date((currentYearInCalendar - age), time.Month(rng.Intn(12)+1), rng.Intn(28)+1, 0, 0, 0, 0, time.UTC)
-		if i == 1 {
-			fmt.Printf("dob check: %v", dob)
-			fmt.Println()
-		}
 		enrolled := rng.Intn(2) == 1
 
 		student := Student{
@@ -411,12 +345,12 @@ func createNewStudents(schoolID string, students []Student) error {
 }
 
 // REPORT CARDS
+var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 func GenerateReportCards(studentList []Student, classList []Class) ([]ReportCard, error) {
 	return generateReportCards(studentList, classList)
 }
 func generateReportCards(studentList []Student, classList []Class) ([]ReportCard, error) {
-	source := rand.NewSource(time.Now().UnixNano())
-	rng := rand.New(source)
 	var (
 		reportCards []ReportCard
 	)

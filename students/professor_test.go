@@ -8,7 +8,10 @@ import (
 func Test_ProfessorCrud(t *testing.T) {
 	var (
 		newAvg = 3.5
+		//schoolID = uuid.New().String()
 	)
+	th.TestingInit()
+	defer th.TestingEnvDif()
 	createdProf, err := CreateProfessor("chapstick")
 	if err != nil {
 		t.Errorf("Unexpected error creating professor: %v", err)

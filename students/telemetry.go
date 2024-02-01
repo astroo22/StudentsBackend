@@ -17,6 +17,10 @@ type GradeAvg_API struct {
 }
 
 func GetGradeAvgForSchool(schoolID string) ([]GradeAvg_API, error) {
+	return getGradeAvgForSchool(schoolID)
+}
+
+func getGradeAvgForSchool(schoolID string) ([]GradeAvg_API, error) {
 	var (
 		grdAvg sql.NullFloat64
 	)
@@ -169,6 +173,10 @@ func updateProfessorsStudentAvgs(professors []string) error {
 	return nil
 }
 func UpdateSchoolAvg(schoolID string) (float64, error) {
+	return updateSchoolAvg(schoolID)
+}
+
+func updateSchoolAvg(schoolID string) (float64, error) {
 	var (
 		schoolAvg float64
 	)
@@ -297,7 +305,14 @@ func updateProfessorsClassList(classList []Class) error {
 
 	return nil
 }
+
+// Shouldn't really run this unless in go routine
+// even then this takes awhile and is pretty resource intensive so if my db gets big its not ideal
 func UpdateAllSchoolAvgGpa() error {
+	return updateAllSchoolAvgGpa()
+}
+
+func updateAllSchoolAvgGpa() error {
 	schools, err := GetAllSchools()
 	if err != nil {
 		return err

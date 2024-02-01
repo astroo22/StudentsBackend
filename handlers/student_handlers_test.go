@@ -21,6 +21,8 @@ import (
 
 func TestCreateStudentHandler(t *testing.T) {
 	// Create a request body
+	th.TestingInit()
+	defer th.TestingEnvDif()
 	form := url.Values{}
 	form.Add("name", "John Doe")
 	form.Add("current_year", "3")
@@ -71,6 +73,8 @@ func TestCreateStudentHandler(t *testing.T) {
 
 }
 func TestGetStudentHandler(t *testing.T) {
+	th.TestingInit()
+	defer th.TestingEnvDif()
 	// Create a request with the student id parameter
 	dob, err := time.Parse("2006-01-02", "2013-01-07")
 	if err != nil {
@@ -133,6 +137,8 @@ func TestGetStudentHandler(t *testing.T) {
 	th.AssertEqual(t, "enrolled", studentapi.Enrolled, true)
 }
 func TestUpdateStudentHandler(t *testing.T) {
+	th.TestingInit()
+	defer th.TestingEnvDif()
 	// Create a request with the student id parameter
 	dob, err := time.Parse("2006-01-02", "2013-01-07")
 	if err != nil {
@@ -201,6 +207,8 @@ func TestUpdateStudentHandler(t *testing.T) {
 }
 func TestDeleteStudentHandler(t *testing.T) {
 	// Create a new student
+	th.TestingInit()
+	defer th.TestingEnvDif()
 	dob, _ := time.Parse("2006-01-02", "2013-01-07")
 	newStudent, err := students.CreateNewStudent("John Doe", 6, 2031, 3.7, 12, dob, true)
 	if err != nil {

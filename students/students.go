@@ -33,10 +33,6 @@ type UpdateStudentOptions struct {
 	Enrolled       bool
 }
 
-func Hello() string {
-	return "Hello, world."
-}
-
 func CreateNewStudent(name string, currentYear int, graduationYear int, avgGPA float64, age int, dob time.Time, enrolled bool) (Student, error) {
 	return createNewStudent(name, currentYear, graduationYear, avgGPA, age, dob, enrolled)
 }
@@ -71,7 +67,7 @@ func GetStudent(studentID string) (Student, error) {
 }
 
 func getStudent(studentID string) (Student, error) {
-	getStatement := `SELECT * FROM STUDENTS WHERE student_id = $1`
+	getStatement := `SELECT "student_id","name","current_year","graduation_year","avg_gpa","age","dob","enrolled" FROM STUDENTS WHERE student_id = $1`
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		log.Println(" err : ", err)
@@ -165,15 +161,7 @@ func flipEnrollmentStatus(studentIDs []string) error {
 		log.Println(" err : ", err)
 		return err
 	}
-
 	defer db.Close()
-
-	// Prepare the statement since might be hit often.
-	// stmt, err := db.Prepare(updateStatement)
-	// if err != nil {
-	// 	return err
-	// }
-
 	_, err = db.Exec(updateStatement, pq.Array(studentIDs))
 	if err != nil {
 		return err
@@ -201,6 +189,10 @@ func deleteStudent(studentID string) error {
 }
 
 func ScanStudent(row *sql.Row) (Student, error) {
+	return scanStudent(row)
+}
+
+func scanStudent(row *sql.Row) (Student, error) {
 	student := Student{}
 	err := row.Scan(
 		&student.StudentID,
@@ -217,8 +209,11 @@ func ScanStudent(row *sql.Row) (Student, error) {
 	}
 	return student, nil
 }
-
 func ScanStudents(rows *sql.Rows) ([]Student, error) {
+	return scanStudents(rows)
+}
+
+func scanStudents(rows *sql.Rows) ([]Student, error) {
 	defer rows.Close()
 	var students []Student
 	for rows.Next() {

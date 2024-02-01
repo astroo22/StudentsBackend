@@ -18,9 +18,14 @@ func Test_SchoolCrud(t *testing.T) {
 		ownerID   = uuid.New().String()
 		schoolID  = uuid.New().String()
 	)
-
+	th.TestingInit()
+	defer th.TestingEnvDif()
 	//students going to update add rick then remove him
 	stu1, err := CreateNewStudent("vesemir", 2, 2034, 3.5, 9, time.Date(2014, time.September, 7, 3, 2, 1, 0, time.UTC), true)
+	if err != nil {
+		t.Error(err)
+	}
+	_, err = CreateReportCard(stu1.StudentID)
 	if err != nil {
 		t.Error(err)
 	}
@@ -28,7 +33,15 @@ func Test_SchoolCrud(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	_, err = CreateReportCard(stu2.StudentID)
+	if err != nil {
+		t.Error(err)
+	}
 	stu3, err := CreateNewStudent("rick", 2, 1976, 4.0, 9, time.Date(1976, time.September, 5, 3, 2, 1, 0, time.UTC), true)
+	if err != nil {
+		t.Error(err)
+	}
+	_, err = CreateReportCard(stu3.StudentID)
 	if err != nil {
 		t.Error(err)
 	}
@@ -36,10 +49,19 @@ func Test_SchoolCrud(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	_, err = CreateReportCard(stu4.StudentID)
+	if err != nil {
+		t.Error(err)
+	}
 	stu5, err := CreateNewStudent("squidward", 2, 2034, 3.2, 9, time.Date(2014, time.September, 3, 3, 2, 1, 0, time.UTC), true)
 	if err != nil {
 		t.Error(err)
 	}
+	_, err = CreateReportCard(stu5.StudentID)
+	if err != nil {
+		t.Error(err)
+	}
+	// lol if you just create new student it gives random gpa val
 	//roster
 	roster = append(roster, stu1.StudentID, stu2.StudentID, stu4.StudentID, stu5.StudentID)
 

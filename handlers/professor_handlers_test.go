@@ -18,6 +18,8 @@ import (
 )
 
 func TestCrudProfessorHandler(t *testing.T) {
+	th.TestingInit()
+	defer th.TestingEnvDif()
 	name := "birdperson"
 
 	form := url.Values{}

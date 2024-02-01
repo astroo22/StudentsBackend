@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"students/client"
 	"students/students"
 
 	"github.com/gorilla/mux"
@@ -21,7 +22,7 @@ func CreateProfessorHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Unexpected error creating professor")
 		return
 	}
-	ret, err := json.Marshal(professor)
+	ret, err := json.Marshal(client.ProfessorToAPI(professor))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling professor")
@@ -45,7 +46,7 @@ func GetProfessorHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "professor not found")
 		return
 	}
-	ret, err := json.Marshal(professor)
+	ret, err := json.Marshal(client.ProfessorToAPI(professor))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling professor")

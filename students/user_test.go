@@ -12,6 +12,8 @@ func TestUserCRUD(t *testing.T) {
 		Email:          "testuser@example1.com",
 		HashedPassword: "password123",
 	}
+	th.TestingInit()
+	defer th.TestingEnvDif()
 	newUser, err := newUserOpts.CreateNewUser()
 	if err != nil {
 		t.Fatalf("Unexpected error creating user: %v", err)

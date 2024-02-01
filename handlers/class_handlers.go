@@ -6,12 +6,17 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"students/client"
 	"students/students"
 
 	"github.com/gorilla/mux"
 )
 
 func CreateClassHandler(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
 	classGrade, err := strconv.Atoi(r.FormValue("teaching_grade"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -28,12 +33,13 @@ func CreateClassHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Unexpected error creating class")
 		return
 	}
-	ret, err := json.Marshal(class)
+	ret, err := json.Marshal(client.ClassToAPI(class))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling class")
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(ret)
 }
 
@@ -58,7 +64,7 @@ func GetClassHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Class not found")
 		return
 	}
-	ret, err := json.Marshal(class)
+	ret, err := json.Marshal(client.ClassToAPI(class))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling class")

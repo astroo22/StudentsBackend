@@ -9,6 +9,8 @@ import (
 )
 
 func Test_ReportCardCrud(t *testing.T) {
+	th.TestingInit()
+	defer th.TestingEnvDif()
 	finalClassList := []string{"math", "science", "english", "lunch"}
 	var (
 		name1          = "Mittens"

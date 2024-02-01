@@ -180,6 +180,10 @@ func scanProf(row *sql.Row) (Professor, error) {
 	return prof, nil
 }
 func ScanProfessors(rows *sql.Rows) ([]Professor, error) {
+	return scanProfessors(rows)
+}
+
+func scanProfessors(rows *sql.Rows) ([]Professor, error) {
 	var professors []Professor
 	defer rows.Close()
 

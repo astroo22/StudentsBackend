@@ -17,8 +17,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// TODO: testing unfinished as it does not have classlist implimentation
 func Test_CrudReportCardHandlers(t *testing.T) {
+	th.TestingInit()
+	defer th.TestingEnvDif()
 	dob, err := time.Parse("2006-01-02", "2020-02-07")
 	if err != nil {
 		t.Error(err)

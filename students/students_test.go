@@ -8,13 +8,6 @@ import (
 	"testing"
 )
 
-func TestHello(t *testing.T) {
-	want := "Hello, world."
-	if got := Hello(); got != want {
-		t.Errorf("Hello() = %q, want %q", got, want)
-	}
-}
-
 func Test_StudentsCrud(t *testing.T) {
 	var (
 		name1           = "Mittens"
@@ -28,6 +21,8 @@ func Test_StudentsCrud(t *testing.T) {
 		//age2 	= 17
 		dob = time.Date(2007, time.February, 8, 4, 5, 5, 5, time.Local)
 	)
+	th.TestingInit()
+	defer th.TestingEnvDif()
 	// Create
 	student, err := CreateNewStudent(name1, currentYear, graduationYear, avgGPA, age, dob, true)
 	if err != nil {

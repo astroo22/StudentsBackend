@@ -31,6 +31,10 @@ type UpdateClassOptions struct {
 }
 
 func CreateClass(teachingGrade int, professorID string, subject string, roster []string) (Class, error) {
+	return createClass(teachingGrade, professorID, subject, roster)
+}
+
+func createClass(teachingGrade int, professorID string, subject string, roster []string) (Class, error) {
 	class := Class{
 		ClassID:       uuid.New().String(),
 		TeachingGrade: teachingGrade,
@@ -51,6 +55,7 @@ func CreateClass(teachingGrade int, professorID string, subject string, roster [
 	}
 	return class, nil
 }
+
 func GetClass(classID string) (Class, error) {
 	return getClass(classID)
 }
@@ -69,6 +74,7 @@ func getClass(classID string) (Class, error) {
 	return class, nil
 
 }
+
 func GetClasses(classIDs []string) ([]Class, error) {
 	return getClasses(classIDs)
 }
@@ -96,7 +102,6 @@ func getClasses(classIDs []string) ([]Class, error) {
 		return nil, err
 	}
 	return classes, nil
-
 }
 
 func (opts UpdateClassOptions) UpdateClass() error {
@@ -161,6 +166,10 @@ func (opts UpdateClassOptions) prepRosterUpdate() ([]string, error) {
 }
 
 func ScanClasses(rows *sql.Rows) ([]Class, error) {
+	return scanClasses(rows)
+}
+
+func scanClasses(rows *sql.Rows) ([]Class, error) {
 	defer rows.Close()
 	var (
 		classes  []Class

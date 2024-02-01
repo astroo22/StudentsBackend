@@ -17,6 +17,8 @@ import (
 )
 
 func Test_CrudClassHandlers(t *testing.T) {
+	th.TestingInit()
+	defer th.TestingEnvDif()
 	class := client.Class_API{
 		TeachingGrade: 5,
 		ProfessorID:   "123456789012345678901234567890",

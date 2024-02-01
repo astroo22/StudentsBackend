@@ -21,12 +21,8 @@ type Config struct {
 
 const prodfilepath = "/var/www/backend/config/postgrescreds.prod.json"
 const filepath = "config/postgrescreds.dev.yml"
+const testfilepath = "../config/postgrescreds.dev.yml"
 
-// INFO: Looks like aws saves these yml values as json which is in conflict with setup
-// to avoid a full setup change right now which is not really a bad thing or hard to do
-// I'm going to just convert it for now to avoid conflicts with other things.
-// TODO: Update this so that it just switches based on env or create the json files here
-// either one doesn't matter just do it later.
 func getYMLcreds() Config {
 	fp := ""
 	config := Config{}
@@ -35,6 +31,8 @@ func getYMLcreds() Config {
 
 		//log.Fatal("APP_ENV is not set")
 		fp = prodfilepath
+	} else if appEnv == "TEST" {
+		fp = testfilepath
 	} else {
 		fp = filepath
 	}

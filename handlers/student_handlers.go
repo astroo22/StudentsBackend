@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"students/client"
 	"students/students"
 	"time"
 
@@ -60,7 +61,7 @@ func CreateStudentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//thing := student.ToApi()
-	ret, err := json.Marshal(student)
+	ret, err := json.Marshal(client.StudentToAPI(student))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling class")
@@ -83,7 +84,7 @@ func GetStudentHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Student not found")
 		return
 	}
-	ret, err := json.Marshal(student)
+	ret, err := json.Marshal(client.StudentToAPI(student))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling student")
@@ -92,8 +93,6 @@ func GetStudentHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(ret)
 }
 
-// should I preload this with reportcards as well?
-// TODO: I might not need this
 func GetAllStudentsHandler(w http.ResponseWriter, r *http.Request) {
 	students, err := students.GetAllStudents()
 	if err != nil {
@@ -101,7 +100,7 @@ func GetAllStudentsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "error on get all")
 		return
 	}
-	ret, err := json.Marshal(students)
+	ret, err := json.Marshal(client.StudentsToAPI(students))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling class")

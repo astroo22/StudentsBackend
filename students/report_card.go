@@ -243,8 +243,11 @@ func deleteReportCard(studentID string) error {
 	}
 	return nil
 }
-
 func ScanReportCard(row *sql.Row) (ReportCard, error) {
+	return scanReportCard(row)
+}
+
+func scanReportCard(row *sql.Row) (ReportCard, error) {
 	var (
 		reportCard = ReportCard{}
 		classList  []byte
@@ -268,6 +271,10 @@ func ScanReportCard(row *sql.Row) (ReportCard, error) {
 	return reportCard, nil
 }
 func ScanReportCards(rows *sql.Rows) ([]ReportCard, error) {
+	return scanReportCards(rows)
+}
+
+func scanReportCards(rows *sql.Rows) ([]ReportCard, error) {
 	defer rows.Close()
 	var (
 		reportCards []ReportCard

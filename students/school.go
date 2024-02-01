@@ -48,8 +48,6 @@ func CreateSchool(schoolID, name, ownerID string, professorList []string, classL
 	return createSchool(schoolID, name, ownerID, professorList, classList, studentList)
 }
 func createSchool(schoolID, name, ownerID string, professorList []string, classList []string, studentList []string) (School, error) {
-	// this needs to do a check of where I store ownerID's in the future and make sure it exists
-	// if ownerID exists continue if not return.
 	insertStatement := `INSERT INTO Schools("school_id","owner_id","school_name","professor_list","class_list","student_list") VALUES($1,$2,$3,$4,$5,$6)`
 	db, err := sqlgeneric.Init()
 	if err != nil {
@@ -70,12 +68,10 @@ func createSchool(schoolID, name, ownerID string, professorList []string, classL
 		return School{}, err
 	}
 
-	// I dont yet know how performant this I may not want it here.
 	err = UpdateSchoolRankings()
 	if err != nil {
 		return School{}, err
 	}
-	// Then I need to get the ranking. WIll need to build ranking functions
 	ret := School{
 		SchoolID:      schoolID,
 		OwnerID:       ownerID,
@@ -182,8 +178,11 @@ func getAllSchoolsForUser(ownerID string) ([]School, error) {
 // 	return schoolAvg, nil
 
 // }
-
 func UpdateSchoolRankings() error {
+	return updateSchoolRankings()
+}
+
+func updateSchoolRankings() error {
 	db, err := sqlgeneric.Init()
 	if err != nil {
 		fmt.Println(err)
@@ -239,6 +238,7 @@ func getClassesForSchool(schoolID string) ([]Class, error) {
 	}
 	return classes, nil
 }
+
 func GetStudentsForSchool(schoolID string) ([]Student, error) {
 	return getStudentsForSchool(schoolID)
 }
@@ -285,7 +285,6 @@ func (opts UpdateSchoolOptions) updateSchool() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("hit update school??")
 	if len(opts.SchoolName) > 0 {
 		SQL += fmt.Sprintf(" school_name = $%d,", i)
 		values = append(values, opts.SchoolName)
@@ -322,7 +321,7 @@ func (opts UpdateSchoolOptions) updateSchool() error {
 		return nil
 	}
 	defer db.Close()
-	fmt.Println(SQL)
+	//fmt.Println(SQL)
 	_, err = db.Exec(SQL, values...)
 	if err != nil {
 		fmt.Println(err)
@@ -331,8 +330,11 @@ func (opts UpdateSchoolOptions) updateSchool() error {
 	return nil
 
 }
-
 func (opts UpdateSchoolOptions) UpdateHelper() (School, error) {
+	return opts.updateHelper()
+}
+
+func (opts UpdateSchoolOptions) updateHelper() (School, error) {
 	school, err := GetSchool(opts.SchoolID)
 	if err != nil {
 		return School{}, err
@@ -364,7 +366,7 @@ func (opts UpdateSchoolOptions) UpdateHelper() (School, error) {
 	}
 	if len(opts.RemoveFromClassList) > 0 {
 		for _, class := range opts.RemoveFromClassList {
-			fmt.Printf("removing : %v ", class)
+			//fmt.Printf("removing : %v ", class)
 			school.ClassList = remove(school.ClassList, class)
 		}
 	}
@@ -379,7 +381,7 @@ func (opts UpdateSchoolOptions) UpdateHelper() (School, error) {
 	if len(opts.RemoveFromStudentList) > 0 {
 		for _, student := range opts.RemoveFromStudentList {
 			if contains(school.StudentList, student) {
-				fmt.Printf("removing : %v ", student)
+				//fmt.Printf("removing : %v ", student)
 				school.StudentList = remove(school.StudentList, student)
 			}
 		}

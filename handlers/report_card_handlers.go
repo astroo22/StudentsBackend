@@ -27,7 +27,7 @@ func CreateReportCardHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ret, err := json.Marshal(reportcard)
+	ret, err := json.Marshal(client.ReportCardToAPI(reportcard))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling card")
@@ -44,14 +44,13 @@ func GetReportCardHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Invalid request payload")
 		return
 	}
-	reportCard, err := students.GetReportCard(studentID)
+	reportcard, err := students.GetReportCard(studentID)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprint(w, "report card not found")
 		return
 	}
-	rc := client.ReportCardToAPI(reportCard)
-	ret, err := json.Marshal(rc)
+	ret, err := json.Marshal(client.ReportCardToAPI(reportcard))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Unexpected error mashalling class")
